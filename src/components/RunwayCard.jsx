@@ -7,6 +7,7 @@ const RunwayCard = ({
 	windDir,
 	windSpd,
 	crossWindLimit,
+	headWindLimit,
 	tailWindLimit,
 }) => {
 	const { crosswind, headwind } = calculateCrossWind(
@@ -18,26 +19,35 @@ const RunwayCard = ({
 	let isDanger = false,
 		isCrossWindDanger,
 		isTailWindDanger,
+		isHeadWindDanger,
 		dangerMessage;
 
 	if (crosswind > crossWindLimit) {
 		isCrossWindDanger = true;
 	}
 
-	if (headwind > 0 && headwind > tailWindLimit) {
+	if (headwind > 0 && headwind > headWindLimit) {
+		isHeadWindDanger = true;
+	}
+
+	if (headwind < 0 && Math.abs(headwind) > tailWindLimit) {
 		isTailWindDanger = true;
 	}
 
-	if (isCrossWindDanger || isTailWindDanger) {
+	if (isCrossWindDanger || isTailWindDanger || isHeadWindDanger) {
 		isDanger = true;
 	}
 
 	if (isCrossWindDanger && isTailWindDanger) {
 		dangerMessage = "⚠️ 側風、尾風超限";
+	} else if (isCrossWindDanger && isHeadWindDanger) {
+		dangerMessage = "⚠️ 側風、頂風超限";
 	} else if (isCrossWindDanger) {
 		dangerMessage = "⚠️ 側風超限";
 	} else if (isTailWindDanger) {
 		dangerMessage = "⚠️ 尾風超限";
+	} else if (isHeadWindDanger) {
+		dangerMessage = "⚠️ 頂風超限";
 	}
 
 	const cardStyle = {

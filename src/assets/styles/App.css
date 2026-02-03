@@ -35,27 +35,61 @@ body {
 }
 
 .limit-setting-section {
-	display: flex;
+	display: grid;
+	grid-template-columns: repeat(3, 1fr);
+	gap: 12px;
 	width: 100%;
-	justify-content: space-around;
-	align-items: center;
+	margin-top: 20px;
 }
 
 .limit-setting {
 	display: flex;
-	justify-content: space-around;
+	flex-direction: column;
+	justify-content: center;
 	align-items: center;
-	width: 250px;
+	gap: 8px;
 	background: #1e293b;
-	padding: 10px;
-	border-radius: 8px;
-	margin-top: 15px;
+	padding: 15px 10px;
+	border-radius: 12px;
+	transition: all 0.3s ease;
+}
+
+.limit-setting:hover {
+	transform: translateY(-2px);
+	background: #334155;
+}
+
+.limit-setting span {
+	font-size: 0.9em;
+	color: #94a3b8;
+	font-weight: bold;
 }
 
 .limit-setting-input {
-	width: 35px;
-	padding: 5px;
-	border-radius: 4px;
-	border: none;
-	background-color: lightgray;
+	width: 50px;
+	padding: 6px;
+	border-radius: 6px;
+	border: 1px solid #475569;
+	background-color: #0f172a;
+	color: #38bdf8;
+	text-align: center;
+	font-weight: bold;
+	font-size: 1.1em;
+}
+
+.limit-setting-input:focus {
+	outline: 2px solid #38bdf8;
+	border-color: transparent;
+}
+
+@media (max-width: 500px) {
+	.limit-setting-section {
+		grid-template-columns: 1fr;
+	}
+
+	.limit-setting {
+		flex-direction: row;
+		justify-content: space-between;
+		padding: 15px 20px;
+	}
 }
