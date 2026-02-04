@@ -13,7 +13,7 @@ export const useAvwx = (icaoCode) => {
 		setError(null);
 		setData(null);
 
-		const token = "fbS-Td1ocFhLxSMbwkJ6Aw7QKuRI4DBxYv0pKaB-uMo";
+		const token = import.meta.env.VITE_AVWX_TOKEN;
 		const headers = { Authorization: token };
 
 		try {
