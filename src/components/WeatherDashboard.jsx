@@ -21,8 +21,7 @@ const WeatherDashboard = ({ data }) => {
 					<div className="value">
 						{data.wind_direction.value == null
 							? "VRB"
-							: data.wind_direction.value}
-						°
+							: `${data.wind_direction.value}°`}
 					</div>
 				</div>
 				<div className="metric-item">
