@@ -32,6 +32,8 @@ export const useAvwx = (icaoCode) => {
 
 			const metarData = await metarRes.json();
 			const stationData = await stationRes.json();
+			const temp = { ...stationData, ...metarData };
+			console.log(temp);
 
 			setData({
 				...stationData,

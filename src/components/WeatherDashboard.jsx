@@ -18,7 +18,12 @@ const WeatherDashboard = ({ data }) => {
 			<div className="metrics-grid">
 				<div className="metric-item">
 					<label>風向</label>
-					<div className="value">{data.wind_direction?.value}°</div>
+					<div className="value">
+						{data.wind_direction.value == null
+							? "VRB"
+							: data.wind_direction.value}
+						°
+					</div>
 				</div>
 				<div className="metric-item">
 					<label>風速</label>
