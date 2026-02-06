@@ -13,6 +13,12 @@ function App() {
 	const [icao, setIcao] = useState(
 		localStorage.getItem("last-icao") || "RCTP",
 	);
+
+	const [favorite, setFavorite] = useState(() => {
+		const saved = localStorage.getItem("favorite");
+		return saved ? JSON.parse(saved) : [];
+	});
+
 	const [CrossWindLimit, setCrossWindLimit] = useState(
 		Number(localStorage.getItem("crosswind-limit")) || 15,
 	);
@@ -31,11 +37,37 @@ function App() {
 	useEffect(() => {
 		localStorage.setItem("last-icao", icao);
 	}, [icao]);
+
+	useEffect(() => {
+		localStorage.setItem("favorite", JSON.stringify(favorite));
+	}, [favorite]);
+
 	useEffect(() => {
 		localStorage.setItem("crosswind-limit", CrossWindLimit);
 		localStorage.setItem("tailwind-limit", TailWindLimit);
 		localStorage.setItem("headwind-limit", HeadWindLimit);
 	}, [CrossWindLimit, TailWindLimit, HeadWindLimit]);
+
+	const toggleFavorite = (target) => {
+		if (!target) {
+			return;
+		} else {
+			if (favorite.includes(target)) {
+				setFavorite(favorite.filter((id) => id !== target));
+			}
+			if (!data || data.icao !== target) {
+				alert("請先「查詢」確認機場存在後，再加入收藏！");
+				return;
+			} else {
+				if (favorite.length >= 8) {
+					alert("收藏清單已滿 (最多 8 個)");
+					return;
+				} else {
+					setFavorite([...favorite], icao);
+				}
+			}
+		}
+	};
 
 	return (
 		<div className="app-container">
@@ -46,6 +78,8 @@ function App() {
 				setIcao={setIcao}
 				onSearch={fetchWeather}
 				loading={loading}
+				favorite={favorite}
+				toggleFavorite={toggleFavorite}
 			/>
 
 			{error && (

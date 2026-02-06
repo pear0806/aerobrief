@@ -16,6 +16,20 @@
 	letter-spacing: 1px;
 }
 
+.star-btn {
+	background: none;
+	border: none;
+	font-size: 1.5rem;
+	cursor: pointer;
+	padding: 0 10px;
+	color: #475569;
+	transition: all 0.3s ease;
+}
+
+.star-btn.isFavorited {
+	color: #fbbf24;
+}
+
 .search-btn {
 	background: #0ea5e9;
 	border: none;
@@ -34,4 +48,28 @@
 .search-btn:disabled {
 	background: #475569;
 	cursor: not-allowed;
+}
+
+.favorite-list {
+	margin-top: 10px;
+	display: flex;
+	gap: 8px;
+	flex-wrap: wrap;
+	margin-bottom: 10px;
+}
+
+.favorite-list span {
+	font-size: 0.8rem;
+	color: #64678b;
+	align-self: center;
+}
+
+.favorite-list button {
+	background-color: #1e293b;
+	color: #94a3b8;
+	border: 1px solid #334155;
+	border-radius: 15px;
+	padding: 4px 12px;
+	font-size: 0.8rem;
+	cursor: pointer;
 }
