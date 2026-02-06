@@ -69,6 +69,18 @@
 	color: #f1f5f9;
 }
 
+.togglePressureUnit {
+	cursor: pointer;
+	margin-left: 8px;
+	font-size: 0.8em;
+	color: #38bdf8;
+	text-decoration: underline;
+}
+
+.metricUnit {
+	margin-left: 4px;
+}
+
 .raw-metar {
 	margin-top: 15px;
 	background: #0f172a;

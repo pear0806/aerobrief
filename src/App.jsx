@@ -24,6 +24,8 @@ function App() {
 		Number(localStorage.getItem("headwind-limit")) || 20,
 	);
 
+	const [pressureUnit, setPressureUnit] = useState("hPa");
+
 	const { data, loading, error, fetchWeather } = useAvwx(icao);
 
 	useEffect(() => {
@@ -56,7 +58,11 @@ function App() {
 				<Skeleton />
 			) : data ? (
 				<>
-					<WeatherDashboard data={data} />
+					<WeatherDashboard
+						data={data}
+						pressureUnit={pressureUnit}
+						setPressureUnit={setPressureUnit}
+					/>
 					<div className="limit-setting-section">
 						<LimitControl
 							label="✈️ 機型側風限制"

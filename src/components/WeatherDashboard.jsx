@@ -1,7 +1,14 @@
+import { convertPressure } from "../utils/converter.js";
 import "../assets/styles/WeatherDashboard.css";
 
-const WeatherDashboard = ({ data }) => {
+const WeatherDashboard = ({ data, pressureUnit, setPressureUnit }) => {
 	if (!data) return null;
+
+	const toggleUnit = () => {
+		setPressureUnit((prev) => {
+			return prev === "hPa" ? "inHg" : "hPa";
+		});
+	};
 
 	return (
 		<div className="weather-dashboard">
@@ -27,19 +34,31 @@ const WeatherDashboard = ({ data }) => {
 				<div className="metric-item">
 					<label>風速</label>
 					<div className="value">
-						{data.wind_speed?.value} <small>kts</small>
+						{data.wind_speed?.value}
+						<small className="metricUnit">kts</small>
 					</div>
 				</div>
 				<div className="metric-item">
 					<label>能見度</label>
 					<div className="value">
-						{data.visibility?.value} <small>sm</small>
+						{data.visibility?.value}
+						<small className="metricUnit">sm</small>
 					</div>
 				</div>
 				<div className="metric-item">
-					<label>高度計</label>
+					<label>
+						高度計
+						<span
+							className="togglePressureUnit"
+							onClick={toggleUnit}
+						>
+							(切換單位)
+						</span>
+					</label>
+
 					<div className="value">
-						{data.altimeter?.value} <small>hPa</small>
+						{convertPressure(data.altimeter?.value, pressureUnit)}
+						<small className="metricUnit">{pressureUnit}</small>
 					</div>
 				</div>
 			</div>
