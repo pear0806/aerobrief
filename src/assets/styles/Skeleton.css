@@ -26,8 +26,8 @@
 	margin-bottom: 20px;
 }
 
-.metrics-grid {
-	display: flex;
+.skeleton-metrics-grid {
+	display: grid;
 	grid-template-columns: repeat(2, 1fr);
 	gap: 15px;
 	margin-bottom: 20px;

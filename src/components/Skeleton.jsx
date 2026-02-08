@@ -6,7 +6,7 @@ const SkeletonLoader = () => {
 		<>
 			<div className="skeleton skeleton-title"></div>
 
-			<div className="metrics-grid">
+			<div className="skeleton-metrics-grid">
 				<div className="skeleton skeleton-metric"></div>
 				<div className="skeleton skeleton-metric"></div>
 				<div className="skeleton skeleton-metric"></div>
