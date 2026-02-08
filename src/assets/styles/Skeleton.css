@@ -26,10 +26,17 @@
 	margin-bottom: 20px;
 }
 
+.metrics-grid {
+	display: flex;
+	grid-template-columns: repeat(2, 1fr);
+	gap: 15px;
+	margin-bottom: 20px;
+}
+
 .skeleton-text {
-	height: 20px;
-	margin-bottom: 8px;
-	border-radius: 4px;
+	width: 40%;
+	margin-top: 30px;
+	margin-bottom: 15px;
 }
 
 .skeleton-metric {

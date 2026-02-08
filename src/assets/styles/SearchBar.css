@@ -2,10 +2,12 @@
 	display: flex;
 	gap: 10px;
 	margin-bottom: 20px;
+	width: 580px;
+	justify-content: center;
 }
 
 .search-input {
-	flex: 1;
+	width: 200px;
 	background: #1e293b;
 	border: 1px solid #334155;
 	color: white;
@@ -31,6 +33,12 @@
 }
 
 .search-btn {
+	width: 160px;
+	white-space: nowrap;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	text-align: center;
 	background: #0ea5e9;
 	border: none;
 	color: white;

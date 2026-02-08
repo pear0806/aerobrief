@@ -54,8 +54,8 @@ function App() {
 		} else {
 			if (favorite.includes(target)) {
 				setFavorite(favorite.filter((id) => id !== target));
-			}
-			if (!data || data.icao !== target) {
+				return;
+			} else if (target !== icao) {
 				alert("請先「查詢」確認機場存在後，再加入收藏！");
 				return;
 			} else {
@@ -63,7 +63,7 @@ function App() {
 					alert("收藏清單已滿 (最多 8 個)");
 					return;
 				} else {
-					setFavorite([...favorite], icao);
+					setFavorite([...favorite, target]);
 				}
 			}
 		}
@@ -90,66 +90,70 @@ function App() {
 
 			{loading ? (
 				<Skeleton />
-			) : data ? (
-				<>
-					<WeatherDashboard
-						data={data}
-						pressureUnit={pressureUnit}
-						setPressureUnit={setPressureUnit}
-					/>
-					<div className="limit-setting-section">
-						<LimitControl
-							label="✈️ 機型側風限制"
-							value={CrossWindLimit}
-							setValue={setCrossWindLimit}
-						/>
-						<LimitControl
-							label="✈️ 機型順風限制"
-							value={TailWindLimit}
-							setValue={setTailWindLimit}
-						/>
-						<LimitControl
-							label="✈️ 機型頂風限制"
-							value={HeadWindLimit}
-							setValue={setHeadWindLimit}
-						/>
-					</div>
-
-					<h3 className="section-title">跑道分析 ({data.station})</h3>
-					<div
-						style={{
-							display: "flex",
-							flexDirection: "column",
-							gap: "10px",
-						}}
-					>
-						{data.runways && data.runways.length > 0 ? (
-							data.runways.map((rwy) => (
-								<RunwayCard
-									key={rwy.name}
-									runwayName={rwy.name}
-									heading={rwy.heading}
-									windDir={data.wind_direction?.value || 0}
-									windSpd={data.wind_speed?.value || 0}
-									crossWindLimit={CrossWindLimit}
-									headWindLimit={HeadWindLimit}
-									tailWindLimit={TailWindLimit}
-								/>
-							))
-						) : (
-							<p
-								style={{
-									textAlign: "center",
-									color: "#666",
-								}}
-							>
-								無跑道資料
-							</p>
-						)}
-					</div>
-				</>
 			) : (
-				<></>
+				data && (
+					<>
+						<WeatherDashboard
+							data={data}
+							pressureUnit={pressureUnit}
+							setPressureUnit={setPressureUnit}
+						/>
+						<div className="limit-setting-section">
+							<LimitControl
+								label="✈️ 機型側風限制"
+								value={CrossWindLimit}
+								setValue={setCrossWindLimit}
+							/>
+							<LimitControl
+								label="✈️ 機型順風限制"
+								value={TailWindLimit}
+								setValue={setTailWindLimit}
+							/>
+							<LimitControl
+								label="✈️ 機型頂風限制"
+								value={HeadWindLimit}
+								setValue={setHeadWindLimit}
+							/>
+						</div>
+
+						<h3 className="section-title">
+							跑道分析 ({data.station})
+						</h3>
+						<div
+							style={{
+								display: "flex",
+								flexDirection: "column",
+								gap: "10px",
+							}}
+						>
+							{data.runways && data.runways.length > 0 ? (
+								data.runways.map((rwy) => (
+									<RunwayCard
+										key={rwy.name}
+										runwayName={rwy.name}
+										heading={rwy.heading}
+										windDir={
+											data.wind_direction?.value || 0
+										}
+										windSpd={data.wind_speed?.value || 0}
+										crossWindLimit={CrossWindLimit}
+										headWindLimit={HeadWindLimit}
+										tailWindLimit={TailWindLimit}
+									/>
+								))
+							) : (
+								<p
+									style={{
+										textAlign: "center",
+										color: "#666",
+									}}
+								>
+									無跑道資料
+								</p>
+							)}
+						</div>
+					</>
+				)
 			)}
 		</div>
 	);
