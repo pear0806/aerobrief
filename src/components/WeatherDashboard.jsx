@@ -14,11 +14,13 @@ const WeatherDashboard = ({ data, pressureUnit, setPressureUnit }) => {
 		<div className="weather-dashboard">
 			<div className="dashboard-header">
 				<h2>
-					{data.station}
-					{data.iata ? `(${data.iata})` : ""} 機場氣象
+					{data.common.station}
+					{data.common.iata ? `(${data.common.iata})` : ""} 機場氣象
 				</h2>
-				<span className={`flight-rules rule-${data.flight_rules}`}>
-					{data.flight_rules}
+				<span
+					className={`flight-rules rule-${data.common.flight_rules}`}
+				>
+					{data.common.flight_rules}
 				</span>
 			</div>
 
@@ -26,22 +28,22 @@ const WeatherDashboard = ({ data, pressureUnit, setPressureUnit }) => {
 				<div className="metric-item">
 					<label>風向</label>
 					<div className="value">
-						{data.wind_direction.value == null
+						{data.common.wind_direction.value == null
 							? "VRB"
-							: `${data.wind_direction.value}°`}
+							: `${data.common.wind_direction.value}°`}
 					</div>
 				</div>
 				<div className="metric-item">
 					<label>風速</label>
 					<div className="value">
-						{data.wind_speed?.value}
+						{data.common.wind_speed?.value}
 						<small className="metricUnit">kts</small>
 					</div>
 				</div>
 				<div className="metric-item">
 					<label>能見度</label>
 					<div className="value">
-						{data.visibility?.value}
+						{data.common.visibility?.value}
 						<small className="metricUnit">sm</small>
 					</div>
 				</div>
@@ -57,16 +59,28 @@ const WeatherDashboard = ({ data, pressureUnit, setPressureUnit }) => {
 					</label>
 
 					<div className="value">
-						{convertPressure(data.altimeter?.value, pressureUnit)}
+						{convertPressure(
+							data.common.altimeter?.value,
+							pressureUnit,
+						)}
 						<small className="metricUnit">{pressureUnit}</small>
 					</div>
 				</div>
 			</div>
 
-			<div className="raw-metar">
+			<div className="raw-info">
 				<small>RAW METAR:</small>
-				<code>{data.raw}</code>
+				<code>{data.common.raw}</code>
 			</div>
+
+			{data.taf == null ? (
+				<></>
+			) : (
+				<div className="raw-info">
+					<small>RAW TAF:</small>
+					<code>{data.taf.raw}</code>
+				</div>
+			)}
 		</div>
 	);
 };

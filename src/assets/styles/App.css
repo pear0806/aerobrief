@@ -31,6 +31,40 @@ body {
 	text-transform: uppercase;
 }
 
+.aircraft-dropdown {
+	margin-top: 20px;
+	margin-bottom: 10px;
+	text-align: center;
+}
+
+.aircraft-dropdown label {
+	color: #94a3b8;
+	margin-right: 10px;
+	font-weight: bold;
+}
+
+.aircraft-select {
+	padding: 8px 12px;
+	border-radius: 6px;
+	background-color: #1e293b;
+	color: #38bdf8;
+	border: 1px solid #334155;
+	font-weight: bold;
+	font-size: 1rem;
+	cursor: pointer;
+	outline: none;
+	transition: all 0.2s ease;
+}
+
+.aircraft-select:hover {
+	background-color: #334155;
+}
+
+.aircraft-select:focus {
+	border-color: #0ea5e9;
+	box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.2);
+}
+
 .section-title {
 	border-bottom: 1px solid #334155;
 	padding-bottom: 5px;

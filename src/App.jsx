@@ -8,6 +8,7 @@ import Skeleton from "./components/Skeleton";
 import LimitControl from "./components/LimitControl";
 
 import "./assets/styles/App.css";
+import { aircraftDatabase } from "./data/aircrafts";
 
 function App() {
 	const [icao, setIcao] = useState(
@@ -33,6 +34,8 @@ function App() {
 	const [pressureUnit, setPressureUnit] = useState("hPa");
 
 	const { data, loading, error, fetchWeather } = useAvwx(icao);
+
+	const [aircraft, setAircraft] = useState("CUSTOM");
 
 	useEffect(() => {
 		localStorage.setItem("last-icao", icao);
@@ -69,6 +72,17 @@ function App() {
 		}
 	};
 
+	const handleAirCraftChange = (e) => {
+		const selected = e.target.value;
+		setAircraft(selected);
+		const data = aircraftDatabase[selected];
+		if (selected !== "CUSTOM") {
+			setCrossWindLimit(data.cross);
+			setTailWindLimit(data.tail);
+			setHeadWindLimit(data.head);
+		}
+	};
+
 	return (
 		<div className="app-container">
 			<h1 className="title">✈️ AeroBrief</h1>
@@ -98,21 +112,48 @@ function App() {
 							pressureUnit={pressureUnit}
 							setPressureUnit={setPressureUnit}
 						/>
+
+						<div className="aircraft-dropdown">
+							<label>✈️ 快速載入機型限制：</label>
+							<select
+								value={aircraft}
+								onChange={handleAirCraftChange}
+								className="aircraft-select"
+							>
+								{Object.entries(aircraftDatabase).map(
+									([key, aircraft]) => (
+										<option key={key} value={key}>
+											{aircraft.name}({key})
+										</option>
+									),
+								)}
+							</select>
+						</div>
+
 						<div className="limit-setting-section">
 							<LimitControl
 								label="✈️ 機型側風限制"
 								value={CrossWindLimit}
-								setValue={setCrossWindLimit}
+								setValue={(val) => {
+									setAircraft("CUSTOM");
+									setCrossWindLimit(val);
+								}}
 							/>
 							<LimitControl
 								label="✈️ 機型順風限制"
 								value={TailWindLimit}
-								setValue={setTailWindLimit}
+								setValue={(val) => {
+									setAircraft("CUSTOM");
+									setTailWindLimit(val);
+								}}
 							/>
 							<LimitControl
 								label="✈️ 機型頂風限制"
 								value={HeadWindLimit}
-								setValue={setHeadWindLimit}
+								setValue={(val) => {
+									setAircraft("CUSTOM");
+									setHeadWindLimit(val);
+								}}
 							/>
 						</div>
 

@@ -17,13 +17,14 @@ export const useAvwx = (icaoCode) => {
 		const headers = { Authorization: token };
 
 		try {
-			const [metarRes, stationRes] = await Promise.all([
+			const [tafRes, metarRes, stationRes] = await Promise.all([
+				fetch(`https://avwx.rest/api/taf/${icaoCode}`, { headers }),
 				fetch(`https://avwx.rest/api/metar/${icaoCode}`, { headers }),
 				fetch(`https://avwx.rest/api/station/${icaoCode}`, { headers }),
 			]);
 
 			if (!metarRes.ok) {
-				throw new Error("fetch airport weather error");
+				throw new Error("fetch airport metar error");
 			}
 
 			if (!stationRes.ok) {
@@ -32,12 +33,24 @@ export const useAvwx = (icaoCode) => {
 
 			const metarData = await metarRes.json();
 			const stationData = await stationRes.json();
-			const temp = { ...stationData, ...metarData };
+			let tafData;
+
+			if (tafRes.ok) {
+				tafData = await tafRes.json();
+			} else {
+				tafData = null;
+			}
+
+			const temp = {
+				taf: tafData,
+				common: { ...stationData, ...metarData },
+				runways: formatRunways(stationData.runways),
+			};
 			console.log(temp);
 
 			setData({
-				...stationData,
-				...metarData,
+				taf: tafData,
+				common: { ...stationData, ...metarData },
 				runways: formatRunways(stationData.runways),
 			});
 		} catch (err) {
