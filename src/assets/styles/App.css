@@ -31,6 +31,11 @@ body {
 	text-transform: uppercase;
 }
 
+.error-message {
+	color: #ef4444;
+	text-align: center;
+}
+
 .aircraft-dropdown {
 	margin-top: 20px;
 	margin-bottom: 10px;

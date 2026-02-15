@@ -1,11 +1,13 @@
 import { useEffect, useState } from "react";
 import { useAvwx } from "./hooks/useAvwx";
+import { useVatsim } from "./hooks/useVatsim";
 
 import SearchBar from "./components/SearchBar";
 import WeatherDashboard from "./components/WeatherDashboard";
 import RunwayCard from "./components/RunwayCard";
 import Skeleton from "./components/Skeleton";
 import LimitControl from "./components/LimitControl";
+import VastimStatus from "./components/VatsimStatus";
 
 import "./assets/styles/App.css";
 import { aircraftDatabase } from "./data/aircrafts";
@@ -35,10 +37,15 @@ function App() {
 
 	const { data, loading, error, fetchWeather } = useAvwx(icao);
 
+	const { controller, vatsimLoading, vatsimError, fetchVatsimData } =
+		useVatsim(icao);
+
 	const [aircraft, setAircraft] = useState("CUSTOM");
 
 	useEffect(() => {
 		localStorage.setItem("last-icao", icao);
+		const interval = setInterval(fetchVatsimData, 60000);
+		return () => clearInterval(interval);
 	}, [icao]);
 
 	useEffect(() => {
@@ -72,6 +79,11 @@ function App() {
 		}
 	};
 
+	const handleOnSearch = () => {
+		fetchWeather();
+		fetchVatsimData();
+	};
+
 	const handleAirCraftChange = (e) => {
 		const selected = e.target.value;
 		setAircraft(selected);
@@ -90,16 +102,16 @@ function App() {
 			<SearchBar
 				icao={icao}
 				setIcao={setIcao}
-				onSearch={fetchWeather}
-				loading={loading}
+				onSearch={handleOnSearch}
+				loading={loading || vatsimLoading}
 				favorite={favorite}
 				toggleFavorite={toggleFavorite}
 			/>
 
-			{error && (
-				<div style={{ color: "#ef4444", textAlign: "center" }}>
-					⚠️ {error}
-				</div>
+			{error && <div className="error-message">⚠️ {error}</div>}
+
+			{vatsimError && (
+				<div className="error-message">⚠️ {vatsimError}</div>
 			)}
 
 			{loading ? (
@@ -112,6 +124,11 @@ function App() {
 							pressureUnit={pressureUnit}
 							setPressureUnit={setPressureUnit}
 						/>
+
+						<VastimStatus
+							controller={controller}
+							loading={vatsimLoading}
+						></VastimStatus>
 
 						<div className="aircraft-dropdown">
 							<label>✈️ 快速載入機型限制：</label>

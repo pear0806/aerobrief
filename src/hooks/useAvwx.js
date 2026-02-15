@@ -28,7 +28,7 @@ export const useAvwx = (icaoCode) => {
 			}
 
 			if (!stationRes.ok) {
-				throw new Error("fetch runway infomation error");
+				throw new Error("fetch airport infomation error");
 			}
 
 			const metarData = await metarRes.json();
