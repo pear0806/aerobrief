@@ -1,3 +1,4 @@
+import { motion } from "framer-motion";
 import { calculateCrossWind } from "../utils/caclRWYwind.js";
 import "../assets/styles/RunwayCard.css";
 
@@ -9,6 +10,7 @@ const RunwayCard = ({
 	crossWindLimit,
 	headWindLimit,
 	tailWindLimit,
+	index,
 }) => {
 	const { crosswind, headwind } = calculateCrossWind(
 		heading,
@@ -60,7 +62,24 @@ const RunwayCard = ({
 	};
 
 	return (
-		<div className="runway-cards-container" style={cardStyle}>
+		<motion.div
+			className="runway-cards-container"
+			style={cardStyle}
+			initial={{ opacity: 0, y: 50 }}
+			whileInView={{ opacity: 1, y: 0 }}
+			viewport={{
+				once: true,
+				amount: 0.3,
+			}}
+			transition={{
+				duration: 0.5,
+				delay: index * 0.1,
+				type: "spring",
+				stiffness: 100,
+			}}
+			whileHover={{ scale: 1.02 }}
+			whileTap={{ scale: 0.98 }}
+		>
 			<div className="runway-card">
 				<h3>
 					跑道 {runwayName} ({heading}°)
@@ -86,7 +105,7 @@ const RunwayCard = ({
 					<p className="wind-num">{Math.abs(headwind)} kts</p>
 				</div>
 			</div>
-		</div>
+		</motion.div>
 	);
 };
 

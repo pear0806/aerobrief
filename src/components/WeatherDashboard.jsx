@@ -1,4 +1,8 @@
 import { convertPressure } from "../utils/converter.js";
+import {
+	calculateDensityAltitude,
+	getPerformanceImpact,
+} from "../utils/physics.js";
 import "../assets/styles/WeatherDashboard.css";
 
 const WeatherDashboard = ({ data, pressureUnit, setPressureUnit }) => {
@@ -9,6 +13,13 @@ const WeatherDashboard = ({ data, pressureUnit, setPressureUnit }) => {
 			return prev === "hPa" ? "inHg" : "hPa";
 		});
 	};
+
+	const elev = data.common.elevation_ft;
+	const qnh = data.common.altimeter?.value;
+	const temp = data.common.temperature?.value;
+
+	const da = calculateDensityAltitude(elev, qnh, temp);
+	const impact = getPerformanceImpact(da, elev);
 
 	return (
 		<div className="weather-dashboard">
@@ -54,7 +65,7 @@ const WeatherDashboard = ({ data, pressureUnit, setPressureUnit }) => {
 							className="togglePressureUnit"
 							onClick={toggleUnit}
 						>
-							(切換單位)
+							切換單位
 						</span>
 					</label>
 
@@ -64,6 +75,34 @@ const WeatherDashboard = ({ data, pressureUnit, setPressureUnit }) => {
 							pressureUnit,
 						)}
 						<small className="metricUnit">{pressureUnit}</small>
+					</div>
+				</div>
+
+				<div
+					className="metric-item"
+					style={{ borderLeft: `4px solid ${impact.color}` }}
+				>
+					<label>密度高度 (DA)</label>
+					<div className="value">
+						{da ? da.toLocaleString() : "N/A"}
+						<small className="metricUnit">ft</small>
+					</div>
+					<div
+						style={{
+							fontSize: "0.8rem",
+							color: impact.color,
+							marginTop: "4px",
+						}}
+					>
+						{impact.text}
+					</div>
+				</div>
+
+				<div className="metric-item">
+					<label>機場標高</label>
+					<div className="value">
+						{elev}
+						<small className="metricUnit">ft</small>
 					</div>
 				</div>
 			</div>

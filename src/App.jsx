@@ -44,13 +44,21 @@ function App() {
 
 	useEffect(() => {
 		localStorage.setItem("last-icao", icao);
-		const interval = setInterval(fetchVatsimData, 60000);
-		return () => clearInterval(interval);
 	}, [icao]);
 
 	useEffect(() => {
 		localStorage.setItem("favorite", JSON.stringify(favorite));
 	}, [favorite]);
+
+	useEffect(() => {
+		if (data && data.station) {
+			const interval = setInterval(() => {
+				fetchWeather();
+				fetchVatsimData();
+			}, 60000);
+			return () => clearInterval(interval);
+		}
+	}, [data]);
 
 	useEffect(() => {
 		localStorage.setItem("crosswind-limit", CrossWindLimit);
@@ -185,7 +193,7 @@ function App() {
 							}}
 						>
 							{data.runways && data.runways.length > 0 ? (
-								data.runways.map((rwy) => (
+								data.runways.map((rwy, index) => (
 									<RunwayCard
 										key={rwy.name}
 										runwayName={rwy.name}
@@ -197,6 +205,7 @@ function App() {
 										crossWindLimit={CrossWindLimit}
 										headWindLimit={HeadWindLimit}
 										tailWindLimit={TailWindLimit}
+										index={index}
 									/>
 								))
 							) : (
