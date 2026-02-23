@@ -199,9 +199,12 @@ function App() {
 										runwayName={rwy.name}
 										heading={rwy.heading}
 										windDir={
-											data.wind_direction?.value || 0
+											data.common.wind_direction?.value ||
+											0
 										}
-										windSpd={data.wind_speed?.value || 0}
+										windSpd={
+											data.common.wind_speed?.value || 0
+										}
 										crossWindLimit={CrossWindLimit}
 										headWindLimit={HeadWindLimit}
 										tailWindLimit={TailWindLimit}

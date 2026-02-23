@@ -63,7 +63,7 @@ const RunwayCard = ({
 
 	return (
 		<motion.div
-			className="runway-cards-container"
+			className="runway-card"
 			style={cardStyle}
 			initial={{ opacity: 0, y: 50 }}
 			whileInView={{ opacity: 1, y: 0 }}
@@ -80,18 +80,16 @@ const RunwayCard = ({
 			whileHover={{ scale: 1.02 }}
 			whileTap={{ scale: 0.98 }}
 		>
-			<div className="runway-card">
-				<h3>
-					跑道 {runwayName} ({heading}°)
-				</h3>
-				{isDanger ? (
-					<span style={{ color: "#c0392b", fontWeight: "bold" }}>
-						{dangerMessage}
-					</span>
-				) : (
-					""
-				)}
-			</div>
+			<h3>
+				跑道 {runwayName} ({heading}°)
+			</h3>
+			{isDanger ? (
+				<span style={{ color: "#c0392b", fontWeight: "bold" }}>
+					{dangerMessage}
+				</span>
+			) : (
+				""
+			)}
 
 			<div className="wind-info">
 				<div>
