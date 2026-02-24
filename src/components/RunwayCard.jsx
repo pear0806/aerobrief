@@ -65,11 +65,15 @@ const RunwayCard = ({
 
 	return (
 		<motion.div
-			className="runway-card-contianer"
-			style={cardStyle, {display:"flex",
-				justifyContent: "center",
+			className="runway-card-container"
+			style={{
+				...cardStyle,
+				display: "flex",
+				justifyContent: "space-between",
 				alignItems: "center",
-				marginBottom: "10px",}}
+				flexWrap: "wrap",
+				gap: "10px",
+			}}
 			initial={{ opacity: 0, y: 50 }}
 			whileInView={{ opacity: 1, y: 0 }}
 			viewport={{
@@ -85,38 +89,36 @@ const RunwayCard = ({
 			whileHover={{ scale: 1.02 }}
 			whileTap={{ scale: 0.98 }}
 		>
-				<div className="runway-card">
-					<h3>
-						跑道 {runwayName} ({heading}°)
-					</h3>
-					{isDanger ? (
-						<span style={{ color: "#c0392b", fontWeight: "bold" }}>
-							{dangerMessage}
-						</span>
-					) : (
-						""
-					)}
-				</div>
+			<div className="runway-card">
+				<h3>
+					跑道 {runwayName} ({heading}°)
+				</h3>
+				{isDanger ? (
+					<span style={{ color: "#c0392b", fontWeight: "bold" }}>
+						{dangerMessage}
+					</span>
+				) : (
+					""
+				)}
+			</div>
 
-				<WindCompass
-					runwayHeading={heading}
-					windDir={windDir}
-				></WindCompass>
+			<WindCompass
+				runwayHeading={heading}
+				windDir={windDir}
+			></WindCompass>
 
-				<div className="wind-info">
-					<div>
-						<small>側風 (Crosswind)</small>
-						<p className="wind-num">{crosswind} kts</p>
-					</div>
-					<div>
-						<small>
-							{headwind > 0
-								? "逆風 (Headwind)"
-								: "順風 (Tailwind)"}
-						</small>
-						<p className="wind-num">{Math.abs(headwind)} kts</p>
-					</div>
+			<div className="wind-info">
+				<div>
+					<small>側風 (Crosswind)</small>
+					<p className="wind-num">{crosswind} kts</p>
 				</div>
+				<div>
+					<small>
+						{headwind > 0 ? "逆風 (Headwind)" : "順風 (Tailwind)"}
+					</small>
+					<p className="wind-num">{Math.abs(headwind)} kts</p>
+				</div>
+			</div>
 		</motion.div>
 	);
 };
