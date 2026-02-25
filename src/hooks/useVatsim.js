@@ -4,6 +4,8 @@ export const useVatsim = (icao) => {
 	const [controller, setController] = useState([]);
 	const [vatsimLoading, setVatsimLoading] = useState(false);
 	const [vatsimError, setVatsimError] = useState(null);
+	const [arrivals, setArrivals] = useState([]);
+	const [departures, setDepartures] = useState([]);
 
 	const fetchVatsimData = async () => {
 		if (!icao) return;
@@ -17,6 +19,7 @@ export const useVatsim = (icao) => {
 			if (!res.ok) throw new Error("fetch VATSIM data error");
 
 			const data = await res.json();
+			console.log("vatsim data : ", data);
 
 			const airportController = data.controllers.filter((c) => {
 				const callsign = c.callsign.toUpperCase();
