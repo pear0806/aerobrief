@@ -1,5 +1,4 @@
 import { motion } from "framer-motion";
-import { calculateCrossWind } from "../utils/caclRWYwind.js";
 import "../assets/styles/RunwayCard.css";
 import "./WindCompass.jsx";
 import WindCompass from "./WindCompass.jsx";
@@ -8,18 +7,14 @@ const RunwayCard = ({
 	runwayName,
 	heading,
 	windDir,
-	windSpd,
+	crosswind,
+	headwind,
 	crossWindLimit,
 	headWindLimit,
 	tailWindLimit,
 	index,
+	isFirst,
 }) => {
-	const { crosswind, headwind } = calculateCrossWind(
-		heading,
-		windDir,
-		windSpd,
-	);
-
 	let isDanger = false,
 		isCrossWindDanger,
 		isTailWindDanger,
@@ -55,7 +50,11 @@ const RunwayCard = ({
 	}
 
 	const cardStyle = {
-		border: isDanger ? "2px solid #e74c3c" : "2px solid #2ecc71",
+		border: isDanger
+			? "2px solid #e74c3c"
+			: isFirst
+				? "2px solid #38bdf8"
+				: "2px solid #2ecc71",
 		backgroundColor: isDanger ? "#fadbd8" : "#eafaf1",
 		padding: "15px",
 		borderRadius: "8px",
@@ -73,6 +72,10 @@ const RunwayCard = ({
 				alignItems: "center",
 				flexWrap: "wrap",
 				gap: "10px",
+				boxShadow:
+					isFirst && !isDanger
+						? "0 0 12px rgba(56, 189, 248, 0.4)"
+						: "none",
 			}}
 			initial={{ opacity: 0, y: 50 }}
 			whileInView={{ opacity: 1, y: 0 }}
@@ -92,6 +95,24 @@ const RunwayCard = ({
 			<div className="runway-card">
 				<h3>
 					跑道 {runwayName} ({heading}°)
+					{isFirst && !isDanger ? (
+						<span
+							style={{
+								fontSize: "0.75rem",
+								backgroundColor: "#38bdf8",
+								color: "white",
+								padding: "2px 8px",
+								borderRadius: "12px",
+								marginLeft: "8px",
+								verticalAlign: "middle",
+								boxShadow: "0 2px 4px rgba(56, 189, 248, 0.3)",
+							}}
+						>
+							✨ 最佳推薦
+						</span>
+					) : (
+						<></>
+					)}
 				</h3>
 				{isDanger ? (
 					<span style={{ color: "#c0392b", fontWeight: "bold" }}>
