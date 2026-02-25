@@ -1,0 +1,108 @@
+.taf-section {
+	margin-top: 20px;
+	background: #1e293b;
+	padding: 15px;
+	border-radius: 12px;
+	border: 1px solid #334155;
+}
+
+.timeline-container {
+	display: flex;
+	flex-direction: column;
+	margin-top: 15px;
+}
+
+.timeline-item {
+	display: flex;
+	min-height: 70px;
+}
+
+.timeline-time {
+	width: 100px;
+	text-align: right;
+	padding-right: 15px;
+	padding-top: 2px;
+}
+
+.time-text {
+	color: #cbd5e1;
+	font-weight: bold;
+	font-family: monospace;
+	font-size: 0.9rem;
+}
+
+.time-type {
+	color: #64748b;
+	font-size: 0.8rem;
+	font-weight: bold;
+	margin-top: 2px;
+}
+
+.timeline-divider {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	width: 20px;
+}
+
+.timeline-dot {
+	width: 12px;
+	height: 12px;
+	border-radius: 50%;
+	background-color: #64748b;
+	z-index: 2;
+}
+
+.timeline-dot.rule-VFR {
+	background-color: #22c55e;
+	box-shadow: 0 0 5px #22c55e;
+}
+
+.timeline-dot.rule-MVFR {
+	background-color: #3b82f6;
+	box-shadow: 0 0 5px #3b82f6;
+}
+
+.timeline-dot.rule-IFR {
+	background-color: #ef4444;
+	box-shadow: 0 0 5px #ef4444;
+}
+
+.timeline-dot.rule-LIFR {
+	background-color: #d946ef;
+	box-shadow: 0 0 5px #d946ef;
+}
+
+.timeline-line {
+	width: 2px;
+	flex-grow: 1;
+	background-color: #334155;
+	margin-top: 5px;
+	margin-bottom: 5px;
+}
+
+.timeline-content {
+	flex-grow: 1;
+	padding-left: 15px;
+	padding-bottom: 20px;
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+}
+
+.forecast-detail {
+	color: #94a3b8;
+	font-size: 0.9rem;
+	display: flex;
+	align-items: center;
+	gap: 6px;
+}
+
+.icon {
+	font-size: 1rem;
+}
+
+.wx-warning {
+	color: #f59e0b;
+	font-weight: bold;
+}

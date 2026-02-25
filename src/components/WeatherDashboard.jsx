@@ -78,6 +78,14 @@ const WeatherDashboard = ({ data, pressureUnit, setPressureUnit }) => {
 					</div>
 				</div>
 
+				<div className="metric-item">
+					<label>溫度</label>
+					<div className="value">
+						{data.common.temperature?.value}
+						<small className="metricUnit">°c</small>
+					</div>
+				</div>
+
 				<div
 					className="metric-item"
 					style={{ borderLeft: `4px solid ${impact.color}` }}
@@ -97,29 +105,12 @@ const WeatherDashboard = ({ data, pressureUnit, setPressureUnit }) => {
 						{impact.text}
 					</div>
 				</div>
-
-				<div className="metric-item">
-					<label>機場標高</label>
-					<div className="value">
-						{elev}
-						<small className="metricUnit">ft</small>
-					</div>
-				</div>
 			</div>
 
 			<div className="raw-info">
 				<small>RAW METAR:</small>
 				<code>{data.common.raw}</code>
 			</div>
-
-			{data.taf == null ? (
-				<></>
-			) : (
-				<div className="raw-info">
-					<small>RAW TAF:</small>
-					<code>{data.taf.raw}</code>
-				</div>
-			)}
 		</div>
 	);
 };

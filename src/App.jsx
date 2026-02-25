@@ -9,6 +9,7 @@ import Skeleton from "./components/Skeleton";
 import LimitControl from "./components/LimitControl";
 import VatsimStatus from "./components/VatsimStatus";
 import VatsimTraffic from "./components/VatsimTraffic";
+import TafTimeline from "./components/TafTimeline";
 
 import "./assets/styles/App.css";
 import { aircraftDatabase } from "./data/aircrafts";
@@ -47,7 +48,7 @@ function App() {
 		fetchVatsimData,
 	} = useVatsim(icao);
 
-	const [aircraft, setAircraft] = useState("CUSTOM");
+	const [aircraft, setAircraft] = useState("B77W");
 
 	useEffect(() => {
 		localStorage.setItem("last-icao", icao);
@@ -140,6 +141,8 @@ function App() {
 							setPressureUnit={setPressureUnit}
 						/>
 
+						<TafTimeline tafData={data.taf} />
+
 						<VatsimStatus
 							controller={controller}
 							loading={vatsimLoading}
@@ -156,7 +159,6 @@ function App() {
 								value={aircraft}
 								onChange={handleAirCraftChange}
 								className="aircraft-select"
-								selected={"B77W"}
 							>
 								{Object.entries(aircraftDatabase).map(
 									([key, aircraft]) => (

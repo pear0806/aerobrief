@@ -1,8 +1,9 @@
 export const calculateDensityAltitude = (elev, qnh, temp) => {
-	if (!elev || !qnh || temp === null) {
+	if (elev === null || elev === undefined || !qnh || temp === null) {
 		return null;
 	} else {
-		const pressureAltitude = elev + (1013.25 - qnh) * 30;
+		const qnhInHpa = qnh < 200 ? qnh * 33.8639 : qnh;
+		const pressureAltitude = elev + (1013.25 - qnhInHpa) * 30;
 		const isaTemp = 15 - (2 * elev) / 1000;
 		const densityAltitude = pressureAltitude + 120 * (temp - isaTemp);
 		return Math.round(densityAltitude);
@@ -10,7 +11,8 @@ export const calculateDensityAltitude = (elev, qnh, temp) => {
 };
 
 export const getPerformanceImpact = (da, elev) => {
-	if (!da) return { text: "N/A", color: "#64748b" };
+	if (da === null || da === undefined)
+		return { text: "N/A", color: "#64748b" };
 
 	const diff = da - elev;
 
