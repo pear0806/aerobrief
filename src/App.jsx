@@ -7,7 +7,8 @@ import WeatherDashboard from "./components/WeatherDashboard";
 import RunwayCard from "./components/RunwayCard";
 import Skeleton from "./components/Skeleton";
 import LimitControl from "./components/LimitControl";
-import VastimStatus from "./components/VatsimStatus";
+import VatsimStatus from "./components/VatsimStatus";
+import VatsimTraffic from "./components/VatsimTraffic";
 
 import "./assets/styles/App.css";
 import { aircraftDatabase } from "./data/aircrafts";
@@ -37,8 +38,14 @@ function App() {
 
 	const { data, loading, error, fetchWeather } = useAvwx(icao);
 
-	const { controller, vatsimLoading, vatsimError, fetchVatsimData } =
-		useVatsim(icao);
+	const {
+		controller,
+		arrivals,
+		departures,
+		vatsimLoading,
+		vatsimError,
+		fetchVatsimData,
+	} = useVatsim(icao);
 
 	const [aircraft, setAircraft] = useState("CUSTOM");
 
@@ -133,10 +140,15 @@ function App() {
 							setPressureUnit={setPressureUnit}
 						/>
 
-						<VastimStatus
+						<VatsimStatus
 							controller={controller}
 							loading={vatsimLoading}
-						></VastimStatus>
+						></VatsimStatus>
+
+						<VatsimTraffic
+							arrivals={arrivals}
+							departures={departures}
+						/>
 
 						<div className="aircraft-dropdown">
 							<label>✈️ 快速載入機型限制：</label>
@@ -144,6 +156,7 @@ function App() {
 								value={aircraft}
 								onChange={handleAirCraftChange}
 								className="aircraft-select"
+								selected={"B77W"}
 							>
 								{Object.entries(aircraftDatabase).map(
 									([key, aircraft]) => (

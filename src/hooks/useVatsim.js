@@ -21,6 +21,7 @@ export const useVatsim = (icao) => {
 			const data = await res.json();
 			console.log("vatsim data : ", data);
 
+			// handle ATC list
 			const airportController = data.controllers.filter((c) => {
 				const callsign = c.callsign.toUpperCase();
 				return callsign.startsWith(icao.toUpperCase() + "_");
@@ -38,6 +39,29 @@ export const useVatsim = (icao) => {
 			});
 
 			setController(airportController);
+
+			// handle Pilot list
+			const allPilots = data.pilots || [];
+			let arrPilots = [];
+			let depPilots = [];
+
+			allPilots.forEach((pilot) => {
+				if (pilot.flight_plan) {
+					const FPL = pilot.flight_plan;
+					const targetICAO = icao.toUpperCase();
+
+					if (FPL.arrival === targetICAO) {
+						arrPilots.push(pilot);
+					}
+
+					if (FPL.departure === targetICAO) {
+						depPilots.push(pilot);
+					}
+				}
+			});
+
+			setArrivals(arrPilots);
+			setDepartures(depPilots);
 		} catch (err) {
 			console.error(err);
 			setVatsimError(err.message);
@@ -46,5 +70,12 @@ export const useVatsim = (icao) => {
 		}
 	};
 
-	return { controller, vatsimLoading, vatsimError, fetchVatsimData };
+	return {
+		controller,
+		arrivals,
+		departures,
+		vatsimLoading,
+		vatsimError,
+		fetchVatsimData,
+	};
 };

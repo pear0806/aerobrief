@@ -1,0 +1,109 @@
+.traffic-section {
+	margin-top: 20px;
+	background: #1e293b;
+	padding: 15px;
+	border-radius: 12px;
+	border: 1px solid #334155;
+}
+
+.traffic-grid {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 15px;
+	margin-top: 10px;
+}
+
+.traffic-column {
+	background: #0f172a;
+	border-radius: 8px;
+	padding: 10px;
+}
+
+.column-title {
+	margin: 0 0 10px 0;
+	padding-bottom: 8px;
+	border-bottom: 1px solid #334155;
+	font-size: 0.95rem;
+	text-align: center;
+}
+
+.arr-title {
+	color: #38bdf8;
+}
+
+.dep-title {
+	color: #a3e635;
+}
+
+.flight-list {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	max-height: 250px;
+	overflow-y: auto;
+	scrollbar-width: none;
+}
+
+.flight-list::-webkit-scrollbar {
+	width: 4px;
+}
+.flight-list::-webkit-scrollbar-thumb {
+	background: #475569;
+	border-radius: 2px;
+}
+
+.flight-card {
+	background: #1e293b;
+	padding: 8px 12px;
+	border-radius: 6px;
+	border-left: 3px solid transparent;
+}
+
+.arr-card {
+	border-left-color: #38bdf8;
+}
+
+.dep-card {
+	border-left-color: #a3e635;
+}
+
+.flight-main {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-bottom: 4px;
+}
+
+.callsign {
+	color: #f8fafc;
+	font-weight: bold;
+	font-family: monospace;
+	font-size: 1.1rem;
+}
+
+.ac-type {
+	background: #334155;
+	color: #cbd5e1;
+	padding: 2px 6px;
+	border-radius: 4px;
+	font-size: 0.75rem;
+	font-weight: bold;
+}
+
+.flight-route {
+	color: #94a3b8;
+	font-size: 0.8rem;
+}
+
+.empty-msg {
+	text-align: center;
+	color: #64748b;
+	padding: 10px;
+	font-size: 0.85rem;
+}
+
+@media (max-width: 600px) {
+	.traffic-grid {
+		grid-template-columns: 1fr;
+	}
+}

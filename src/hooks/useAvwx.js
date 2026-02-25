@@ -46,7 +46,7 @@ export const useAvwx = (icaoCode) => {
 				common: { ...stationData, ...metarData },
 				runways: formatRunways(stationData.runways),
 			};
-			console.log("avwx data", fianlData);
+			console.log("avwx data : ", fianlData);
 
 			setData(fianlData);
 		} catch (err) {
