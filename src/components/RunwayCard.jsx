@@ -9,46 +9,12 @@ const RunwayCard = ({
 	windDir,
 	crosswind,
 	headwind,
-	crossWindLimit,
-	headWindLimit,
-	tailWindLimit,
+	isHeadwind,
+	isDanger,
+	dangerMessage,
 	index,
 	isFirst,
 }) => {
-	let isDanger = false,
-		isCrossWindDanger,
-		isTailWindDanger,
-		isHeadWindDanger,
-		dangerMessage;
-
-	if (crosswind > crossWindLimit) {
-		isCrossWindDanger = true;
-	}
-
-	if (headwind > 0 && headwind > headWindLimit) {
-		isHeadWindDanger = true;
-	}
-
-	if (headwind < 0 && Math.abs(headwind) > tailWindLimit) {
-		isTailWindDanger = true;
-	}
-
-	if (isCrossWindDanger || isTailWindDanger || isHeadWindDanger) {
-		isDanger = true;
-	}
-
-	if (isCrossWindDanger && isTailWindDanger) {
-		dangerMessage = "⚠️ 側風、尾風超限";
-	} else if (isCrossWindDanger && isHeadWindDanger) {
-		dangerMessage = "⚠️ 側風、頂風超限";
-	} else if (isCrossWindDanger) {
-		dangerMessage = "⚠️ 側風超限";
-	} else if (isTailWindDanger) {
-		dangerMessage = "⚠️ 尾風超限";
-	} else if (isHeadWindDanger) {
-		dangerMessage = "⚠️ 頂風超限";
-	}
-
 	const cardStyle = {
 		border: isDanger
 			? "2px solid #e74c3c"
@@ -135,7 +101,7 @@ const RunwayCard = ({
 				</div>
 				<div>
 					<small>
-						{headwind > 0 ? "逆風 (Headwind)" : "順風 (Tailwind)"}
+						{isHeadwind ? "逆風 (Headwind)" : "順風 (Tailwind)"}
 					</small>
 					<p className="wind-num">{Math.abs(headwind)} kts</p>
 				</div>

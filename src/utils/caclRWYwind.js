@@ -1,4 +1,4 @@
-export const calculateCrossWind = (runwayHeading, windDirection, windSpeed) => {
+export const calculateCrosswind = (runwayHeading, windDirection, windSpeed) => {
 	const angleDiff = windDirection - runwayHeading;
 
 	const radians = angleDiff * (Math.PI / 180);

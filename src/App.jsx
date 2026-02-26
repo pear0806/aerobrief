@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useAvwx } from "./hooks/useAvwx";
 import { useVatsim } from "./hooks/useVatsim";
-import { calculateCrossWind } from "./utils/caclRWYwind";
+import { calculateCrosswind } from "./utils/caclRWYwind";
 
 import SearchBar from "./components/SearchBar";
 import WeatherDashboard from "./components/WeatherDashboard";
@@ -208,77 +208,111 @@ function App() {
 						>
 							{data.runways && data.runways.length > 0 ? (
 								() => {
-									const sortedRunway = [...data.runways].sort(
-										(a, b) => {
-											data.common.wind_direction?.value ||
-												0;
-											const windSpd =
-												data.common.wind_speed?.value ||
-												0;
-
-											const { headwind: hwA } =
-												calculateCrossWind(
-													a.heading,
-													windDir,
-													windSpd,
-												);
-											const { headwind: hwB } =
-												calculateCrossWind(
-													b.heading,
-													windDir,
-													windSpd,
-												);
-
-											return hwB - hwA;
-										},
-									);
-
-									const bestRunwayHeading =
-										sortedRunway[0].name.replace(
-											/[^0-9]/g,
-											"",
-										);
-
-									sortedRunway.map((rwy, index) => {
-										const windDir =
-											data.common.wind_direction?.value ||
-											0;
-										const windSpd =
-											data.common.wind_speed?.value || 0;
+									const temp = [];
+									const windSpd =
+										data.common.wind_speed?.value || 0;
+									const windDir =
+										data.common.wind_direction?.value || 0;
+									data.runways.map((rwy, index) => {
 										const { crosswind, headwind } =
-											calculateCrossWind(
+											calculateCrosswind(
 												rwy.heading,
 												windDir,
 												windSpd,
 											);
+
+										let isDanger = false,
+											isCrossWindDanger,
+											isTailWindDanger,
+											isHeadWindDanger,
+											dangerMessage;
+
+										if (rwy.crosswind > crossWindLimit) {
+											isCrossWindDanger = true;
+										}
+
+										if (
+											rwy.headwind > 0 &&
+											rwy.headwind > headWindLimit
+										) {
+											isHeadWindDanger = true;
+										}
+
+										if (
+											rwy.headwind < 0 &&
+											Math.abs(rwy.headwind) >
+												tailWindLimit
+										) {
+											isTailWindDanger = true;
+										}
+
+										if (
+											isCrossWindDanger ||
+											isTailWindDanger ||
+											isHeadWindDanger
+										) {
+											isDanger = true;
+										}
+
+										if (
+											isCrossWindDanger &&
+											isTailWindDanger
+										) {
+											dangerMessage = "⚠️ 側風、尾風超限";
+										} else if (
+											isCrossWindDanger &&
+											isHeadWindDanger
+										) {
+											dangerMessage = "⚠️ 側風、頂風超限";
+										} else if (isCrossWindDanger) {
+											dangerMessage = "⚠️ 側風超限";
+										} else if (isTailWindDanger) {
+											dangerMessage = "⚠️ 尾風超限";
+										} else if (isHeadWindDanger) {
+											dangerMessage = "⚠️ 頂風超限";
+										}
+
+										temp.push({
+											runway: rwy.name,
+											heading: rwy.heading,
+											crosswind: crosswind,
+											headwind: headwind,
+											isDanger: isDanger,
+											dangerMessage: dangerMessage,
+											index: index,
+										});
+									});
+
+									const sortedRunway = [...temp].sort(
+										(a, b) => {
+											return b.headwind - a.headwind;
+										},
+									);
+
+									const bestRunwayHeading =
+										temp[0].name.replace(/[^0-9]/g, "");
+
+									sortedRunway.map((rwy, index) => {
 										const heading = rwy.name.replace(
 											/[^0-9]/g,
 											"",
 										);
 										const isFirst =
 											heading === bestRunwayHeading;
-										return (
-											<RunwayCard
-												key={rwy.name}
-												runwayName={rwy.name}
-												heading={rwy.heading}
-												windDir={
-													data.common.wind_direction
-														?.value || 0
-												}
-												windSpd={
-													data.common.wind_speed
-														?.value || 0
-												}
-												crosswind={crosswind}
-												headwind={headwind}
-												crossWindLimit={CrossWindLimit}
-												headWindLimit={HeadWindLimit}
-												tailWindLimit={TailWindLimit}
-												index={index}
-												isFirst={isFirst}
-											/>
-										);
+
+										<RunwayCard
+											key={rwy.name}
+											runwayName={rwy.name}
+											heading={rwy.heading}
+											windDir={windDir}
+											crosswind={rwy.crosswind}
+											headwind={rwy.headwind}
+											isHeadwind={rwy.headwind > 0}
+											isDanger={rwy.isDanger}
+											dangerMessage={rwy.dangerMessage}
+											index={index}
+											isFirst={isFirst}
+										/>;
 									});
 								}
 							) : (
