@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useAvwx } from "./hooks/useAvwx";
 import { useVatsim } from "./hooks/useVatsim";
 import { calculateCrosswind } from "./utils/caclRWYwind";
@@ -112,6 +112,83 @@ function App() {
 		}
 	};
 
+	const processedRunwaysElements = useMemo(() => {
+		if (!data || !data.runways || data.runways.length === 0) {
+			return [];
+		}
+
+		const windSpd = data.common.wind_speed?.value || 0;
+		const windDir = data.common.wind_direction?.value || 0;
+
+		const proccessed = data.runways.map((rwy, index) => {
+			const { crosswind, headwind } = calculateCrosswind(
+				rwy.heading,
+				windDir,
+				windSpd,
+			);
+
+			let isDanger = false,
+				isCrossWindDanger = false,
+				isTailWindDanger = false,
+				isHeadWindDanger = false,
+				dangerMessage = "";
+
+			if (crosswind > CrossWindLimit) isCrossWindDanger = true;
+			if (headwind > 0 && headwind > HeadWindLimit)
+				isHeadWindDanger = true;
+			if (headwind < 0 && Math.abs(headwind) > TailWindLimit)
+				isTailWindDanger = true;
+
+			if (isCrossWindDanger || isTailWindDanger || isHeadWindDanger)
+				isDanger = true;
+
+			if (isCrossWindDanger && isTailWindDanger)
+				dangerMessage = "⚠️ 側風、尾風超限";
+			else if (isCrossWindDanger && isHeadWindDanger)
+				dangerMessage = "⚠️ 側風、頂風超限";
+			else if (isCrossWindDanger) dangerMessage = "⚠️ 側風超限";
+			else if (isTailWindDanger) dangerMessage = "⚠️ 尾風超限";
+			else if (isHeadWindDanger) dangerMessage = "⚠️ 頂風超限";
+
+			return {
+				name: rwy.name,
+				heading: rwy.heading,
+				crosswind: crosswind,
+				headwind: headwind,
+				isDanger: isDanger,
+				dangerMessage: dangerMessage,
+				index: index,
+			};
+		});
+
+		const sortedRunway = [...proccessed].sort(
+			(a, b) => b.headwind - a.headwind,
+		);
+
+		const bestRunwayHeading = sortedRunway[0].name.replace(/[^0-9]/g, "");
+
+		return sortedRunway.map((rwy) => {
+			const heading = rwy.name.replace(/[^0-9]/g, "");
+			const isFirst = heading === bestRunwayHeading;
+
+			return (
+				<RunwayCard
+					key={rwy.name}
+					runwayName={rwy.name}
+					heading={rwy.heading}
+					windDir={windDir}
+					crosswind={rwy.crosswind}
+					headwind={rwy.headwind}
+					isHeadwind={rwy.headwind > 0}
+					isDanger={rwy.isDanger}
+					dangerMessage={rwy.dangerMessage}
+					index={rwy.index}
+					isFirst={isFirst}
+				/>
+			);
+		});
+	}, [data, CrossWindLimit, HeadWindLimit, TailWindLimit]);
+
 	return (
 		<div className="app-container">
 			<h1 className="title">✈️ AeroBrief</h1>
@@ -206,130 +283,8 @@ function App() {
 								gap: "10px",
 							}}
 						>
-							{data.runways && data.runways.length > 0 ? (
-								(() => {
-									const windSpd =
-										data.common.wind_speed?.value || 0;
-									const windDir =
-										data.common.wind_direction?.value || 0;
-									const proccessed = data.runways.map(
-										(rwy, index) => {
-											const { crosswind, headwind } =
-												calculateCrosswind(
-													rwy.heading,
-													windDir,
-													windSpd,
-												);
-
-											let isDanger = false,
-												isCrossWindDanger,
-												isTailWindDanger,
-												isHeadWindDanger,
-												dangerMessage;
-
-											if (crosswind > CrossWindLimit) {
-												isCrossWindDanger = true;
-											}
-
-											if (
-												headwind > 0 &&
-												headwind > HeadWindLimit
-											) {
-												isHeadWindDanger = true;
-											}
-
-											if (
-												headwind < 0 &&
-												Math.abs(headwind) >
-													TailWindLimit
-											) {
-												isTailWindDanger = true;
-											}
-
-											if (
-												isCrossWindDanger ||
-												isTailWindDanger ||
-												isHeadWindDanger
-											) {
-												isDanger = true;
-											}
-
-											if (
-												isCrossWindDanger &&
-												isTailWindDanger
-											) {
-												dangerMessage =
-													"⚠️ 側風、尾風超限";
-											} else if (
-												isCrossWindDanger &&
-												isHeadWindDanger
-											) {
-												dangerMessage =
-													"⚠️ 側風、頂風超限";
-											} else if (isCrossWindDanger) {
-												dangerMessage = "⚠️ 側風超限";
-											} else if (isTailWindDanger) {
-												dangerMessage = "⚠️ 尾風超限";
-											} else if (isHeadWindDanger) {
-												dangerMessage = "⚠️ 頂風超限";
-											}
-
-											return {
-												name: rwy.name,
-												heading: rwy.heading,
-												crosswind: crosswind,
-												headwind: headwind,
-												isDanger: isDanger,
-												dangerMessage: dangerMessage,
-												index: index,
-											};
-										},
-									);
-
-									console.log(
-										"proccessed RWY : ",
-										proccessed,
-									);
-
-									const sortedRunway = [...proccessed].sort(
-										(a, b) => {
-											return b.headwind - a.headwind;
-										},
-									);
-
-									const bestRunwayHeading =
-										proccessed[0].name.replace(
-											/[^0-9]/g,
-											"",
-										);
-
-									sortedRunway.map((rwy) => {
-										const heading = rwy.name.replace(
-											/[^0-9]/g,
-											"",
-										);
-										const isFirst =
-											heading === bestRunwayHeading;
-
-										return (
-											<RunwayCard
-												key={rwy.name}
-												runwayName={rwy.name}
-												heading={rwy.heading}
-												windDir={windDir}
-												crosswind={rwy.crosswind}
-												headwind={rwy.headwind}
-												isHeadwind={rwy.headwind > 0}
-												isDanger={rwy.isDanger}
-												dangerMessage={
-													rwy.dangerMessage
-												}
-												index={rwy.index}
-												isFirst={isFirst}
-											/>
-										);
-									});
-								})()
+							{processedRunwaysElements.length > 0 ? (
+								processedRunwaysElements
 							) : (
 								<p
 									style={{

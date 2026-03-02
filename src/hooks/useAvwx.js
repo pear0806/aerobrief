@@ -17,10 +17,11 @@ export const useAvwx = (icaoCode) => {
 		const headers = { Authorization: token };
 
 		try {
-			const [tafRes, metarRes, stationRes] = await Promise.all([
+			const [tafRes, metarRes, stationRes, notamRes] = await Promise.all([
 				fetch(`https://avwx.rest/api/taf/${icaoCode}`, { headers }),
 				fetch(`https://avwx.rest/api/metar/${icaoCode}`, { headers }),
 				fetch(`https://avwx.rest/api/station/${icaoCode}`, { headers }),
+				fetch(`https://avwx.rest/api/notam/${icaoCode}`, { headers }),
 			]);
 
 			if (!metarRes.ok) {
@@ -33,7 +34,7 @@ export const useAvwx = (icaoCode) => {
 
 			const metarData = await metarRes.json();
 			const stationData = await stationRes.json();
-			let tafData;
+			let tafData, notamData;
 
 			if (tafRes.ok) {
 				tafData = await tafRes.json();
@@ -41,8 +42,15 @@ export const useAvwx = (icaoCode) => {
 				tafData = null;
 			}
 
+			if (notamRes.ok) {
+				notamData = await notamData.json();
+			} else {
+				notamData = null;
+			}
+
 			const fianlData = {
 				taf: tafData,
+				notam: notamData,
 				common: { ...stationData, ...metarData },
 				runways: formatRunways(stationData.runways),
 			};
