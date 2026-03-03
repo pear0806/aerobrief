@@ -37,7 +37,7 @@
 }
 
 .map-runway-line {
-	stroke-width: 12;
+	stroke-width: 8;
 	stroke-linecap: round;
 	transition: all 0.3s ease;
 }

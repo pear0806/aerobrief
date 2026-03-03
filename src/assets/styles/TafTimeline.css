@@ -51,6 +51,8 @@
 	border-radius: 50%;
 	background-color: #64748b;
 	z-index: 2;
+	position: relative;
+	top: 7px;
 }
 
 .timeline-dot.rule-VFR {

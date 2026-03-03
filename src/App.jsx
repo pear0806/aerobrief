@@ -166,11 +166,12 @@ function App() {
 		const sortedRunway = [...proccessed].sort(
 			(a, b) => b.headwind - a.headwind,
 		);
-		const bestRunwayHeading = sortedRunway[0].name.replace(/[^0-9]/g, "");
+		const maxHeading =
+			sortedRunway.length > 0 ? sortedRunway[0].headwind : 0;
 
 		const finalRunways = sortedRunway.map((rwy) => ({
 			...rwy,
-			isFirst: rwy.name.replace(/[^0-9]/g, "") === bestRunwayHeading,
+			isFirst: rwy.headwind >= maxHeading - 2,
 		}));
 
 		return { processedRunways: finalRunways, windDir };
@@ -279,19 +280,23 @@ function App() {
 										windDir={windDir}
 									></RunwayMap>
 									{processedRunways.map((rwy) => {
-										<RunwayCard
-											key={rwy.name}
-											runwayName={rwy.name}
-											heading={rwy.heading}
-											windDir={windDir}
-											crosswind={rwy.crosswind}
-											headwind={rwy.headwind}
-											isHeadwind={rwy.headwind > 0}
-											isDanger={rwy.isDanger}
-											dangerMessage={rwy.dangerMessage}
-											index={rwy.index}
-											isFirst={rwy.isFirst}
-										/>;
+										return (
+											<RunwayCard
+												key={rwy.name}
+												runwayName={rwy.name}
+												heading={rwy.heading}
+												windDir={windDir}
+												crosswind={rwy.crosswind}
+												headwind={rwy.headwind}
+												isHeadwind={rwy.headwind > 0}
+												isDanger={rwy.isDanger}
+												dangerMessage={
+													rwy.dangerMessage
+												}
+												index={rwy.index}
+												isFirst={rwy.isFirst}
+											/>
+										);
 									})}
 								</>
 							) : (
