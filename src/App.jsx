@@ -11,6 +11,8 @@ import LimitControl from "./components/LimitControl";
 import VatsimStatus from "./components/VatsimStatus";
 import VatsimTraffic from "./components/VatsimTraffic";
 import TafTimeline from "./components/TafTimeline";
+import LandingWarning from "./components/LandingWarning";
+import RunwayMap from "./components/RunwayMap";
 
 import "./assets/styles/App.css";
 import { aircraftDatabase } from "./data/aircrafts";
@@ -112,9 +114,9 @@ function App() {
 		}
 	};
 
-	const processedRunwaysElements = useMemo(() => {
+	const { processedRunways, windDir } = useMemo(() => {
 		if (!data || !data.runways || data.runways.length === 0) {
-			return [];
+			return { processedRunways: [], windDir: 0 };
 		}
 
 		const windSpd = data.common.wind_speed?.value || 0;
@@ -153,40 +155,25 @@ function App() {
 			return {
 				name: rwy.name,
 				heading: rwy.heading,
-				crosswind: crosswind,
-				headwind: headwind,
-				isDanger: isDanger,
-				dangerMessage: dangerMessage,
-				index: index,
+				crosswind,
+				headwind,
+				isDanger,
+				dangerMessage,
+				index,
 			};
 		});
 
 		const sortedRunway = [...proccessed].sort(
 			(a, b) => b.headwind - a.headwind,
 		);
-
 		const bestRunwayHeading = sortedRunway[0].name.replace(/[^0-9]/g, "");
 
-		return sortedRunway.map((rwy) => {
-			const heading = rwy.name.replace(/[^0-9]/g, "");
-			const isFirst = heading === bestRunwayHeading;
+		const finalRunways = sortedRunway.map((rwy) => ({
+			...rwy,
+			isFirst: rwy.name.replace(/[^0-9]/g, "") === bestRunwayHeading,
+		}));
 
-			return (
-				<RunwayCard
-					key={rwy.name}
-					runwayName={rwy.name}
-					heading={rwy.heading}
-					windDir={windDir}
-					crosswind={rwy.crosswind}
-					headwind={rwy.headwind}
-					isHeadwind={rwy.headwind > 0}
-					isDanger={rwy.isDanger}
-					dangerMessage={rwy.dangerMessage}
-					index={rwy.index}
-					isFirst={isFirst}
-				/>
-			);
-		});
+		return { processedRunways: finalRunways, windDir };
 	}, [data, CrossWindLimit, HeadWindLimit, TailWindLimit]);
 
 	return (
@@ -275,6 +262,8 @@ function App() {
 							/>
 						</div>
 
+						<LandingWarning data={data} />
+
 						<h3 className="section-title">跑道分析</h3>
 						<div
 							style={{
@@ -283,8 +272,28 @@ function App() {
 								gap: "10px",
 							}}
 						>
-							{processedRunwaysElements.length > 0 ? (
-								processedRunwaysElements
+							{processedRunways.length > 0 ? (
+								<>
+									<RunwayMap
+										runways={processedRunways}
+										windDir={windDir}
+									></RunwayMap>
+									{processedRunways.map((rwy) => {
+										<RunwayCard
+											key={rwy.name}
+											runwayName={rwy.name}
+											heading={rwy.heading}
+											windDir={windDir}
+											crosswind={rwy.crosswind}
+											headwind={rwy.headwind}
+											isHeadwind={rwy.headwind > 0}
+											isDanger={rwy.isDanger}
+											dangerMessage={rwy.dangerMessage}
+											index={rwy.index}
+											isFirst={rwy.isFirst}
+										/>;
+									})}
+								</>
 							) : (
 								<p
 									style={{
