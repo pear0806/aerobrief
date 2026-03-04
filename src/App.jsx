@@ -40,6 +40,8 @@ function App() {
 
 	const [pressureUnit, setPressureUnit] = useState("hPa");
 
+	const [lastUpdate, setLastUpdate] = useState(Date.now());
+
 	const { data, loading, error, fetchWeather } = useAvwx(icao);
 
 	const {
@@ -63,6 +65,7 @@ function App() {
 
 	useEffect(() => {
 		if (data && data.station) {
+			setLastUpdate(Date.now());
 			const interval = setInterval(() => {
 				fetchWeather();
 				fetchVatsimData();
@@ -166,13 +169,22 @@ function App() {
 		const sortedRunway = [...proccessed].sort(
 			(a, b) => b.headwind - a.headwind,
 		);
+
 		const maxHeading =
 			sortedRunway.length > 0 ? sortedRunway[0].headwind : 0;
+		const bestHeading =
+			sortedRunway.length > 0 ? sortedRunway[0].heading : 0;
 
-		const finalRunways = sortedRunway.map((rwy) => ({
-			...rwy,
-			isFirst: rwy.headwind >= maxHeading - 2,
-		}));
+		const finalRunways = sortedRunway.map((rwy) => {
+			let diff = Math.abs(rwy.heading - bestHeading);
+			if (diff > 180) diff = 360 - diff;
+
+			return {
+				...rwy,
+
+				isFirst: rwy.headwind >= maxHeading - 2 && diff < 90,
+			};
+		});
 
 		return { processedRunways: finalRunways, windDir };
 	}, [data, CrossWindLimit, HeadWindLimit, TailWindLimit]);
@@ -276,6 +288,7 @@ function App() {
 							{processedRunways.length > 0 ? (
 								<>
 									<RunwayMap
+										key={`${data.common.station}-${lastUpdate}`}
 										runways={processedRunways}
 										windDir={windDir}
 									></RunwayMap>
