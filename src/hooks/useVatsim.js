@@ -7,7 +7,10 @@ export const useVatsim = (icao) => {
 	const [arrivals, setArrivals] = useState([]);
 	const [departures, setDepartures] = useState([]);
 
-	const fetchVatsimData = async () => {
+	const fetchVatsimData = async (overrideIcao) => {
+		if (overrideIcao) {
+			icao = overrideIcao;
+		}
 		if (!icao) return;
 
 		setVatsimLoading(true);

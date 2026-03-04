@@ -6,7 +6,10 @@ export const useAvwx = (icaoCode) => {
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState(null);
 
-	const fetchWeather = async () => {
+	const fetchWeather = async (overrideIcao) => {
+		if (overrideIcao) {
+			icaoCode = overrideIcao;
+		}
 		if (!icaoCode) return;
 
 		setLoading(true);

@@ -63,7 +63,7 @@ const SearchBar = ({
 								key={fav}
 								onClick={() => {
 									setIcao(fav);
-									onSearch();
+									onSearch(fav);
 								}}
 							>
 								{fav}

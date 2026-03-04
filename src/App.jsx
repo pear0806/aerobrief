@@ -40,8 +40,6 @@ function App() {
 
 	const [pressureUnit, setPressureUnit] = useState("hPa");
 
-	const [lastUpdate, setLastUpdate] = useState(Date.now());
-
 	const { data, loading, error, fetchWeather } = useAvwx(icao);
 
 	const {
@@ -65,7 +63,6 @@ function App() {
 
 	useEffect(() => {
 		if (data && data.station) {
-			setLastUpdate(Date.now());
 			const interval = setInterval(() => {
 				fetchWeather();
 				fetchVatsimData();
@@ -101,9 +98,10 @@ function App() {
 		}
 	};
 
-	const handleOnSearch = () => {
-		fetchWeather();
-		fetchVatsimData();
+	const handleOnSearch = (targetIcao) => {
+		const searchTarget = typeof targetIcao === "string" ? targetIcao : icao;
+		fetchWeather(searchTarget);
+		fetchVatsimData(searchTarget);
 	};
 
 	const handleAirCraftChange = (e) => {
@@ -288,7 +286,7 @@ function App() {
 							{processedRunways.length > 0 ? (
 								<>
 									<RunwayMap
-										key={`${data.common.station}-${lastUpdate}`}
+										key={icao}
 										runways={processedRunways}
 										windDir={windDir}
 									></RunwayMap>
