@@ -83,91 +83,11 @@ body {
 	color: #94a3b8;
 }
 
-.limit-setting-section {
-	display: grid;
-	grid-template-columns: repeat(3, 1fr);
-	gap: 12px;
-	width: 100%;
-	margin-top: 20px;
-}
-
-.limit-setting {
-	display: flex;
-	flex-direction: column;
-	justify-content: center;
-	align-items: center;
-	gap: 8px;
-	background: #1e293b;
-	padding: 15px 10px;
-	border-radius: 12px;
-	transition: all 0.3s ease;
-}
-
-.limit-setting:hover {
-	transform: translateY(-2px);
-	background: #334155;
-}
-
-.limit-setting span {
-	font-size: 0.9em;
-	color: #94a3b8;
-	font-weight: bold;
-}
-
-.limit-setting-input {
-	width: 50px;
-	padding: 6px;
-	border-radius: 6px;
-	border: 1px solid #475569;
-	background-color: #0f172a;
-	color: #38bdf8;
-	text-align: center;
-	font-weight: bold;
-	font-size: 1.1em;
-}
-
-.limit-setting-input:focus {
-	outline: 2px solid #38bdf8;
-	border-color: transparent;
-}
-
 @media (max-width: 768px) {
 	html {
 		display: flex;
 		justify-content: center;
 		align-items: center;
-	}
-
-	body {
-		padding-right: 20px;
-	}
-
-	.app-container {
-		width: calc(100% - 20px);
-		max-width: calc(100% - 20px);
-		overflow-x: hidden;
-	}
-
-	.search-container {
-		width: 100%;
-		display: flex;
-		flex-direction: column;
-		justify-content: center;
-		align-items: center !important;
-	}
-
-	.dashboard-header {
-		width: 100%;
-		padding: 10px;
-		display: flex;
-		flex-direction: column;
-		justify-content: center;
-		align-items: flex-start;
-	}
-
-	.metrics-grid {
-		display: flex;
-		flex-direction: column;
 	}
 
 	p,
@@ -177,54 +97,13 @@ body {
 		overflow-wrap: break-word;
 	}
 
-	.limit-setting-section {
-		flex-direction: column;
-		align-items: stretch;
-		gap: 15px;
-	}
-
-	.favorite-list {
-		flex-wrap: wrap;
-		justify-content: center;
-		gap: 8px;
-	}
-
-	.vatsim-list {
-		padding-right: 10px;
-	}
-
-	.flight-list {
-		padding-right: 10px;
-	}
-
-	.runway-card,
-	.weather-dashboard {
-		flex-direction: column;
-		align-items: flex-start;
-	}
-
-	.runway-card .stats-row,
-	.weather-dashboard .info-row {
-		flex-wrap: wrap;
-		gap: 10px;
-	}
-
-	.title {
-		font-size: 1.5rem;
-	}
-
 	input,
 	select,
 	button {
 		font-size: 1rem;
 	}
 
-	.traffic-grid {
-		width: calc(100% - 15px);
-	}
-
-	.traffic-column {
-		width: 100%;
-		overflow-x: auto;
+	.title {
+		font-size: 1.5rem;
 	}
 }

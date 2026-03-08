@@ -101,3 +101,22 @@
 	padding: 10px;
 	font-size: 0.85rem;
 }
+
+@media (max-width: 768px) {
+	.vatsim-list {
+		padding-right: 10px;
+	}
+
+	.traffic-grid {
+		width: calc(100% - 15px);
+	}
+
+	.traffic-column {
+		width: 100%;
+		overflow-x: auto;
+	}
+
+	.flight-list {
+		padding-right: 10px;
+	}
+}

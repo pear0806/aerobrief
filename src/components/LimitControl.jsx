@@ -1,3 +1,5 @@
+import "../assets/styles/LimitControl.css";
+
 const LimitControl = ({ label, value, setValue }) => (
 	<div className="limit-setting">
 		<span>{label}</span>

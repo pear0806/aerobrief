@@ -90,3 +90,24 @@
 	font-size: 0.85em;
 	word-break: break-all;
 }
+
+@media (max-width: 768px) {
+	.dashboard-header {
+		width: 100%;
+		padding: 10px;
+		display: flex;
+		flex-direction: column;
+		justify-content: center;
+		align-items: flex-start;
+	}
+
+	.weather-dashboard .raw-info {
+		flex-wrap: wrap;
+		gap: 10px;
+	}
+
+	.metrics-grid {
+		display: flex;
+		flex-direction: column;
+	}
+}
