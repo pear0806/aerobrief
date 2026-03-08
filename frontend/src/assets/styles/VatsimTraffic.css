@@ -108,6 +108,8 @@
 	}
 
 	.traffic-grid {
+		display: flex;
+		flex-direction: column;
 		width: calc(100% - 15px);
 	}
 

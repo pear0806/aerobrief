@@ -13,9 +13,9 @@ import VatsimTraffic from "./components/VatsimTraffic";
 import TafTimeline from "./components/TafTimeline";
 import LandingWarning from "./components/LandingWarning";
 import RunwayMap from "./components/RunwayMap";
+import AircraftSelector from "./components/AircraftSelector";
 
 import "./assets/styles/App.css";
-import { aircraftDatabase } from "./data/aircrafts";
 
 function App() {
 	const [icao, setIcao] = useState(
@@ -104,17 +104,6 @@ function App() {
 		fetchVatsimData(searchTarget);
 	};
 
-	const handleAirCraftChange = (e) => {
-		const selected = e.target.value;
-		setAircraft(selected);
-		const data = aircraftDatabase[selected];
-		if (selected !== "CUSTOM") {
-			setCrossWindLimit(data.cross);
-			setTailWindLimit(data.tail);
-			setHeadWindLimit(data.head);
-		}
-	};
-
 	const { processedRunways, windDir } = useMemo(() => {
 		if (!data || !data.runways || data.runways.length === 0) {
 			return { processedRunways: [], windDir: 0 };
@@ -189,7 +178,7 @@ function App() {
 
 	return (
 		<div className="app-container">
-			<h1 className="title">✈️ AeroBrief</h1>
+			<h1 className="app-main-title">✈️ AeroBrief</h1>
 
 			<SearchBar
 				icao={icao}
@@ -229,22 +218,13 @@ function App() {
 							departures={departures}
 						/>
 
-						<div className="aircraft-dropdown">
-							<label>✈️ 快速載入機型限制：</label>
-							<select
-								value={aircraft}
-								onChange={handleAirCraftChange}
-								className="aircraft-select"
-							>
-								{Object.entries(aircraftDatabase).map(
-									([key, aircraft]) => (
-										<option key={key} value={key}>
-											{aircraft.name}({key})
-										</option>
-									),
-								)}
-							</select>
-						</div>
+						<AircraftSelector
+							aircraft={aircraft}
+							setAircraft={setAircraft}
+							setCrossWindLimit={setCrossWindLimit}
+							setTailWindLimit={setTailWindLimit}
+							setHeadWindLimit={setHeadWindLimit}
+						/>
 
 						<div className="limit-setting-section">
 							<LimitControl
