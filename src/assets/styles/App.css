@@ -228,15 +228,3 @@ body {
 		overflow-x: auto;
 	}
 }
-
-@media (max-width: 500px) {
-	.limit-setting-section {
-		grid-template-columns: 1fr;
-	}
-
-	.limit-setting {
-		flex-direction: row;
-		justify-content: space-between;
-		padding: 15px 20px;
-	}
-}
