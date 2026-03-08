@@ -1,25 +1,17 @@
-// src/components/SkeletonLoader.jsx
 import "../assets/styles/Skeleton.css";
 
-const SkeletonLoader = () => {
+const Skeleton = () => {
 	return (
-		<>
-			<div className="skeleton skeleton-title"></div>
-
-			<div className="skeleton-metrics-grid">
-				<div className="skeleton skeleton-metric"></div>
-				<div className="skeleton skeleton-metric"></div>
-				<div className="skeleton skeleton-metric"></div>
-				<div className="skeleton skeleton-metric"></div>
+		<div className="radar-loader-container">
+			<div className="radar-scope">
+				<div className="radar-sweep"></div>
+				<div className="radar-grid"></div>
 			</div>
-
-			<div className="skeleton skeleton-text"></div>
-
-			<div className="skeleton skeleton-card"></div>
-			<div className="skeleton skeleton-card"></div>
-			<div className="skeleton skeleton-card"></div>
-		</>
+			<p className="loading-text">
+				📡 塔台連線中... 正在獲取最新氣象與流量
+			</p>
+		</div>
 	);
 };
 
-export default SkeletonLoader;
+export default Skeleton;

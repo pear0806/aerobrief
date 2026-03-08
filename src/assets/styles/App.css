@@ -17,6 +17,12 @@ body {
 	justify-content: center;
 }
 
+html,
+body {
+	overflow-x: hidden;
+	width: 100%;
+}
+
 .app-container {
 	max-width: 580px;
 	margin: 0 auto;
@@ -123,6 +129,104 @@ body {
 .limit-setting-input:focus {
 	outline: 2px solid #38bdf8;
 	border-color: transparent;
+}
+
+@media (max-width: 768px) {
+	html {
+		display: flex;
+		justify-content: center;
+		align-items: center;
+	}
+
+	body {
+		padding-right: 20px;
+	}
+
+	.app-container {
+		width: calc(100% - 20px);
+		max-width: calc(100% - 20px);
+		overflow-x: hidden;
+	}
+
+	.search-container {
+		width: 100%;
+		display: flex;
+		flex-direction: column;
+		justify-content: center;
+		align-items: center !important;
+	}
+
+	.dashboard-header {
+		width: 100%;
+		padding: 10px;
+		display: flex;
+		flex-direction: column;
+		justify-content: center;
+		align-items: flex-start;
+	}
+
+	.metrics-grid {
+		display: flex;
+		flex-direction: column;
+	}
+
+	p,
+	div,
+	span {
+		word-break: break-word;
+		overflow-wrap: break-word;
+	}
+
+	.limit-setting-section {
+		flex-direction: column;
+		align-items: stretch;
+		gap: 15px;
+	}
+
+	.favorite-list {
+		flex-wrap: wrap;
+		justify-content: center;
+		gap: 8px;
+	}
+
+	.vatsim-list {
+		padding-right: 10px;
+	}
+
+	.flight-list {
+		padding-right: 10px;
+	}
+
+	.runway-card,
+	.weather-dashboard {
+		flex-direction: column;
+		align-items: flex-start;
+	}
+
+	.runway-card .stats-row,
+	.weather-dashboard .info-row {
+		flex-wrap: wrap;
+		gap: 10px;
+	}
+
+	.title {
+		font-size: 1.5rem;
+	}
+
+	input,
+	select,
+	button {
+		font-size: 1rem;
+	}
+
+	.traffic-grid {
+		width: calc(100% - 15px);
+	}
+
+	.traffic-column {
+		width: 100%;
+		overflow-x: auto;
+	}
 }
 
 @media (max-width: 500px) {
