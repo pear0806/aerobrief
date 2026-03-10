@@ -1,21 +1,21 @@
-import { useEffect, useState, useMemo } from "react";
+import "./assets/styles/App.css";
+
+import { useEffect, useMemo, useState } from "react";
+
+import AircraftSelector from "./components/AircraftSelector";
+import LandingWarning from "./components/LandingWarning";
+import LimitControl from "./components/LimitControl";
+import RunwayCard from "./components/RunwayCard";
+import RunwayMap from "./components/RunwayMap";
+import SearchBar from "./components/SearchBar";
+import Skeleton from "./components/Skeleton";
+import TafTimeline from "./components/TafTimeline";
+import VatsimStatus from "./components/VatsimStatus";
+import VatsimTraffic from "./components/VatsimTraffic";
+import WeatherDashboard from "./components/WeatherDashboard";
 import { useAvwx } from "./hooks/useAvwx";
 import { useVatsim } from "./hooks/useVatsim";
 import { calculateCrosswind } from "./utils/caclRWYwind";
-
-import SearchBar from "./components/SearchBar";
-import WeatherDashboard from "./components/WeatherDashboard";
-import RunwayCard from "./components/RunwayCard";
-import Skeleton from "./components/Skeleton";
-import LimitControl from "./components/LimitControl";
-import VatsimStatus from "./components/VatsimStatus";
-import VatsimTraffic from "./components/VatsimTraffic";
-import TafTimeline from "./components/TafTimeline";
-import LandingWarning from "./components/LandingWarning";
-import RunwayMap from "./components/RunwayMap";
-import AircraftSelector from "./components/AircraftSelector";
-
-import "./assets/styles/App.css";
 
 function App() {
 	const [icao, setIcao] = useState(
