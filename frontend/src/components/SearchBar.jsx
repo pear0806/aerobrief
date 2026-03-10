@@ -1,5 +1,6 @@
-import { useEffect, useRef } from "react";
 import "../assets/styles/SearchBar.css";
+
+import { useEffect, useRef } from "react";
 
 const SearchBar = ({
 	icao,

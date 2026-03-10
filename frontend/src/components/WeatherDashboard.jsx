@@ -1,9 +1,10 @@
+import "../assets/styles/WeatherDashboard.css";
+
 import { convertPressure } from "../utils/converter.js";
 import {
 	calculateDensityAltitude,
 	getPerformanceImpact,
 } from "../utils/physics.js";
-import "../assets/styles/WeatherDashboard.css";
 
 const WeatherDashboard = ({ data, pressureUnit, setPressureUnit }) => {
 	if (!data) return null;

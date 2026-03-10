@@ -7,15 +7,13 @@ const RunwayMap = ({ runways, windDir }) => {
 	const center = size / 2;
 	const runwayLength = 200;
 
-	// ✨ 1. 動態搜集這個機場有幾組「獨立」的跑道數字
-	// 例如 KLAX 會有 06 和 07，這裡會抽出 [6, 7]
 	const uniqueStrips = Array.from(
 		new Set(
 			runways.map((r) => {
 				const match = r.name.match(/\d+/);
 				if (!match) return 0;
 				let num = parseInt(match[0], 10);
-				return num > 18 ? num - 18 : num; // 把 24 轉回 6，當作同一組
+				return num > 18 ? num - 18 : num;
 			}),
 		),
 	)
@@ -34,29 +32,24 @@ const RunwayMap = ({ runways, windDir }) => {
 		const isOpposite = num > 18;
 		const stripNum = isOpposite ? num - 18 : num;
 
-		// 翻轉相反端的 L/R (因為 24R 降落，其實是在 06L 的實體跑道上)
 		let stripSuffix = "";
 		if (hasL) stripSuffix = isOpposite ? "R" : "L";
 		if (hasR) stripSuffix = isOpposite ? "L" : "R";
 		if (hasC) stripSuffix = "C";
 
-		// ✨ 2. 完美分組平移演算法
 		const groupIndex = uniqueStrips.indexOf(stripNum);
-		const groupSpacing = 70; // 每組數字（如 06 和 07）相距 70px
+		const groupSpacing = 70;
 
-		// 讓所有群組在畫面上「置中對齊」
 		const baseSpread =
 			uniqueStrips.length > 1
 				? (groupIndex - (uniqueStrips.length - 1) / 2) * groupSpacing
 				: 0;
 
-		// 同一組裡面的 L / C / R 互相拉開距離
 		const lrSpread =
 			stripSuffix === "L" ? -22 : stripSuffix === "R" ? 22 : 0;
 
 		const stripOffset = baseSpread + lrSpread;
 
-		// 旋轉 180 度的相反端，X 座標必須加負號才能幾何重合
 		return isOpposite ? -stripOffset : stripOffset;
 	};
 

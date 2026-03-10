@@ -1,4 +1,5 @@
 import "../assets/styles/AircraftSelector.css";
+
 import { aircraftDatabase } from "../data/aircrafts";
 
 const AircraftSelector = ({

@@ -1,6 +1,8 @@
-import { motion } from "framer-motion";
 import "../assets/styles/RunwayCard.css";
 import "./WindCompass.jsx";
+
+import { motion } from "framer-motion";
+
 import WindCompass from "./WindCompass.jsx";
 
 const RunwayCard = ({
