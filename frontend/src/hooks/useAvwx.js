@@ -1,60 +1,41 @@
 import { useState } from "react";
 
-import { formatRunways } from "../utils/RWYformatter.js";
-
 export const useAvwx = (icaoCode) => {
 	const [data, setData] = useState(null);
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState(null);
 
 	const fetchWeather = async (overrideIcao) => {
-		if (overrideIcao) {
-			icaoCode = overrideIcao;
-		}
-		if (!icaoCode) return;
+		const targetIcao = overrideIcao || icaoCode;
+		if (!targetIcao) return;
 
 		setLoading(true);
 		setError(null);
 		setData(null);
 
-		const token = import.meta.env.VITE_AVWX_TOKEN;
-		const headers = { Authorization: token };
-
 		try {
-			const [tafRes, metarRes, stationRes] = await Promise.all([
-				fetch(`https://avwx.rest/api/taf/${icaoCode}`, { headers }),
-				fetch(`https://avwx.rest/api/metar/${icaoCode}`, { headers }),
-				fetch(`https://avwx.rest/api/station/${icaoCode}`, { headers }),
-			]);
+			// ✨ 直接打向我們剛寫好的 Python 本地端伺服器！
+			// 不用再帶 Token，也不用 Promise.all 了
+			const response = await fetch(
+				`http://127.0.0.1:8000/api/weather/${targetIcao}`,
+			);
 
-			if (!metarRes.ok) {
-				throw new Error("fetch airport metar error");
+			if (!response.ok) {
+				// 捕捉後端傳來的 {"error": "..."} 訊息
+				const errData = await response.json().catch(() => ({}));
+				throw new Error(
+					errData.error || `無法獲取資料 (${response.status})`,
+				);
 			}
 
-			if (!stationRes.ok) {
-				throw new Error("fetch airport infomation error");
-			}
+			// 解析後端的 JSON
+			const result = await response.json();
 
-			const metarData = await metarRes.json();
-			const stationData = await stationRes.json();
-			let tafData;
-
-			if (tafRes.ok) {
-				tafData = await tafRes.json();
-			} else {
-				tafData = null;
-			}
-
-			const fianlData = {
-				taf: tafData,
-				common: { ...stationData, ...metarData },
-				runways: formatRunways(stationData.runways),
-			};
-			console.log("avwx data : ", fianlData);
-
-			setData(fianlData);
+			// ✨ 因為 Python 後端已經把資料揉成前端要的形狀了，所以這裡只要一行！
+			setData(result);
 		} catch (err) {
 			setError(err.message);
+			console.error("天氣 API 錯誤:", err);
 		} finally {
 			setLoading(false);
 		}

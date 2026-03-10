@@ -1,31 +1,34 @@
 # backend/main.py
+import os
+import httpx
+import asyncio
+from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-# 1. 建立 FastAPI 應用程式實例
+from notam_parser import process_notams
+
+load_dotenv()
+AVWX_TOKEN = os.getenv("AVWX_TOKEN")
+
 app = FastAPI(
     title="AeroBrief API",
-    description="AeroBrief 的專屬後端伺服器",
+    description="AeroBrief Backend",
     version="1.0.0"
 )
 
-# 2. 設定 CORS (跨域資源共用)
-# 因為前端 (Vite) 跑在 localhost:5173，後端跑在 localhost:8000
-# 如果沒有設定 CORS，瀏覽器會基於安全理由阻擋前端去抓後端的資料！
 origins = [
-    "http://localhost:5173",  # 允許本地端 Vite 前端連線
+    "http://localhost:5173",
     "http://127.0.0.1:5173",
 ]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,     # 允許哪些來源
-    allow_credentials=True,    # 是否允許攜帶 Cookie
-    allow_methods=["*"],       # 允許所有 HTTP 請求方法 (GET, POST, OPTIONS 等)
-    allow_headers=["*"],       # 允許所有 HTTP 標頭
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
-
-# 3. 建立你的第一個 API 路由 (Route)
 
 
 @app.get("/")
@@ -41,3 +44,50 @@ async def get_status():
         "vatsim_parser": "ready",
         "weather_parser": "ready"
     }
+
+
+@app.get("/api/weather/{icao}")
+async def get_weather(icao: str):
+    if not AVWX_TOKEN:
+        return {"error": "伺服器遺失 AVWX_TOKEN"}
+
+    headers = {"Authorization": f"{AVWX_TOKEN}"}
+    urls = {
+        "taf": f"https://avwx.rest/api/taf/{icao}",
+        "metar": f"https://avwx.rest/api/metar/{icao}",
+        "station": f"https://avwx.rest/api/station/{icao}",
+        "notam": f"https://avwx.rest/api/notam/{icao}",
+    }
+
+    async with httpx.AsyncClient() as client:
+        responses = await asyncio.gather(
+            client.get(urls["taf"], headers=headers),
+            client.get(urls["metar"], headers=headers),
+            client.get(urls["station"], headers=headers),
+            client.get(urls["notam"], headers=headers)
+        )
+
+        taf_res, metar_res, station_res, notam_res = responses
+
+        if metar_res.status_code != 200:
+            return {"error": f"無法獲取 {icao} 的氣象資料，請確認機場代碼是否正確。"}
+
+        taf_data = taf_res.json() if taf_res.status_code == 200 else None
+        metar_data = metar_res.json() if metar_res.status_code == 200 else None
+        station_data = station_res.json() if station_res.status_code == 200 else None
+
+        raw_notam = notam_res.json() if notam_res.status_code == 200 else None
+        clean_notams = process_notams(raw_notam)
+
+        safe_station = station_data if station_data else {}
+        safe_metar = metar_data if metar_data else {}
+
+        common_data = {**safe_station, **safe_metar}
+
+        return {
+            "taf": taf_data,
+            "common": common_data,
+            "runways": station_data.get("runways", []) if station_data else [],
+            "notam": clean_notams,
+
+        }
