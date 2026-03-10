@@ -11,11 +11,6 @@ node_modules
 dist
 dist-ssr
 *.local
-.env
-.venv/
-venv/
-ENV/
-env/
 
 # backend
 __pycache__/
