@@ -1,0 +1,74 @@
+.notam-board {
+	margin-top: 20px;
+	padding: 20px;
+	background-color: #1e293b;
+	border-radius: 12px;
+	color: #f8fafc;
+}
+
+.notam-board h3 {
+	margin-top: 0;
+	margin-bottom: 15px;
+	font-size: 1.2rem;
+	border-bottom: 1px solid #334155;
+	padding-bottom: 10px;
+}
+
+.notam-list {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+}
+
+.notam-card {
+	background-color: #0f172a;
+	border-left: 4px solid #475569;
+	padding: 12px;
+	border-radius: 6px;
+}
+
+.notam-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-bottom: 8px;
+}
+
+.notam-badge {
+	padding: 4px 10px;
+	border-radius: 20px;
+	font-size: 0.85rem;
+	font-weight: bold;
+}
+
+.badge-danger {
+	background-color: #ef4444;
+	color: white;
+}
+
+.badge-warning {
+	background-color: #f59e0b;
+	color: #1c1917;
+}
+
+.badge-info {
+	background-color: #3b82f6;
+	color: white;
+}
+
+.badge-default {
+	background-color: #64748b;
+	color: white;
+}
+
+.notam-time {
+	font-size: 0.8rem;
+	color: #94a3b8;
+}
+
+.notam-body code {
+	font-family: "JetBrains Mono", "Courier New", Courier, monospace;
+	font-size: 0.85rem;
+	color: #cbd5e1;
+	word-break: break-word;
+}

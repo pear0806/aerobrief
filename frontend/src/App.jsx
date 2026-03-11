@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import AircraftSelector from "./components/AircraftSelector";
 import LandingWarning from "./components/LandingWarning";
 import LimitControl from "./components/LimitControl";
+import NotamBoard from "./components/NotamDashborad";
 import RunwayCard from "./components/RunwayCard";
 import RunwayMap from "./components/RunwayMap";
 import SearchBar from "./components/SearchBar";

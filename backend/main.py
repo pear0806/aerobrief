@@ -75,19 +75,31 @@ async def get_weather(icao: str):
         taf_data = taf_res.json() if taf_res.status_code == 200 else None
         metar_data = metar_res.json() if metar_res.status_code == 200 else None
         station_data = station_res.json() if station_res.status_code == 200 else None
-
-        raw_notam = notam_res.json() if notam_res.status_code == 200 else None
-        clean_notams = process_notams(raw_notam)
+        notam_data = notam_res.json() if notam_res.status_code == 200 else None
 
         safe_station = station_data if station_data else {}
         safe_metar = metar_data if metar_data else {}
 
-        common_data = {**safe_station, **safe_metar}
+        formatted_runways = []
+        for rwy in station_data.get("runways", []) if station_data else []:
+            if rwy.get("ident1"):
+                formatted_runways.append({
+                    "name": rwy.get("ident1"),
+                    "heading": round(rwy.get("bearing1", 0)),
+                    "isFirst": False
+                })
+            if rwy.get("ident1"):
+                formatted_runways.append({
+                    "name": rwy.get("ident2"),
+                    "heading": round(rwy.get("bearing2", 0)),
+                    "isFirst": False
+                })
 
-        return {
+        final_data = {
             "taf": taf_data,
-            "common": common_data,
-            "runways": station_data.get("runways", []) if station_data else [],
-            "notam": clean_notams,
-
+            "common": {**safe_station, **safe_metar},
+            "runways": formatted_runways,
+            "notam": process_notams(notam_data)
         }
+
+        return final_data
