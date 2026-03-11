@@ -107,3 +107,34 @@ async def get_weather(icao: str):
         }
 
         return final_data
+
+
+@app.get("api/vatsim/${icao}")
+async def get_vatsim(icao: str):
+    icao = icao.upper()
+    url = "https://data.vatsim.net/v3/vatsim-data.json"
+
+    async with httpx.AsyncClient() as client:
+        try:
+            res = await client.get(url)
+            data = res.json() if res.status_code == 200 else {
+                "error": "can't fecth vatsim data"}
+        except Exception as e:
+            return {"error": f"fetch vatsim data failed : {str(e)}"}
+
+    controllers = []
+    for c in data.get("controllers", []):
+        callsign = c.get("callsign", "")
+        if callsign.startswith(icao):
+            controllers.append({
+                "callsign": callsign,
+                "frequency": c.get("frequency"),
+                "name": c.get("name")
+            })
+    departures, arrivals = [], []
+
+    for p in data.get("pilots", []):
+        fp = p.get("flight_plan")
+        if not p:
+            continue
+        else:
