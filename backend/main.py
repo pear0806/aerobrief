@@ -51,20 +51,25 @@ async def get_weather(icao: str):
     if not AVWX_TOKEN:
         return {"error": "伺服器遺失 AVWX_TOKEN"}
 
-    headers = {"Authorization": f"{AVWX_TOKEN}"}
+    avwx_headers = {"Authorization": f"{AVWX_TOKEN}"}
+    faa_headers = {
+        "User-Agent": "Mozilla/5.0",
+        "Content-Type": "application/x-www-form-urlencoded"
+    }
+    faa_data = {"searchType": 0, "designatorsForLocation": icao}
     urls = {
         "taf": f"https://avwx.rest/api/taf/{icao}",
         "metar": f"https://avwx.rest/api/metar/{icao}",
         "station": f"https://avwx.rest/api/station/{icao}",
-        "notam": f"https://avwx.rest/api/notam/{icao}",
+        "notam": f"https://notams.aim.faa.gov/notamSearch/search"
     }
 
     async with httpx.AsyncClient() as client:
         responses = await asyncio.gather(
-            client.get(urls["taf"], headers=headers),
-            client.get(urls["metar"], headers=headers),
-            client.get(urls["station"], headers=headers),
-            client.get(urls["notam"], headers=headers)
+            client.get(urls["taf"], headers=avwx_headers),
+            client.get(urls["metar"], headers=avwx_headers),
+            client.get(urls["station"], headers=avwx_headers),
+            client.post(urls["notam"], headers=faa_headers, data=faa_data)
         )
 
         taf_res, metar_res, station_res, notam_res = responses
@@ -76,7 +81,6 @@ async def get_weather(icao: str):
         metar_data = metar_res.json() if metar_res.status_code == 200 else None
         station_data = station_res.json() if station_res.status_code == 200 else None
         notam_data = notam_res.json() if notam_res.status_code == 200 else None
-
         safe_station = station_data if station_data else {}
         safe_metar = metar_data if metar_data else {}
 

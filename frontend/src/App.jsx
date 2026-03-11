@@ -209,6 +209,8 @@ function App() {
 
 						<TafTimeline tafData={data.taf} />
 
+						<NotamBoard notams={data.notam} />
+
 						<VatsimStatus
 							controller={controller}
 							loading={vatsimLoading}
