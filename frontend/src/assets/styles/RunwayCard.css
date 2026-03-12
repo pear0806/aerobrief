@@ -1,29 +1,106 @@
-.runway-card {
+.runway-card-container {
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
+	flex-wrap: wrap;
+	gap: 15px;
+	padding: 20px;
+	margin-bottom: 0;
+	transition:
+		transform 0.2s ease,
+		border-color 0.2s ease,
+		box-shadow 0.2s ease;
 }
 
-.wind-info {
-	display: grid;
-	grid-template-columns: 1fr 1fr;
-	gap: 10px;
-	margin-top: 10px;
+.runway-card-container.danger {
+	border-color: rgba(239, 68, 68, 0.5);
+}
+.runway-card-container.recommended {
+	border-color: rgba(56, 189, 248, 0.5);
+	box-shadow: 0 0 15px rgba(56, 189, 248, 0.2);
+}
+.runway-card-container.normal {
+	border-color: rgba(34, 197, 94, 0.3);
+}
+
+.runway-card-container:hover {
+	transform: scale(1.02) translateY(-4px);
+}
+.runway-card-container.danger:hover {
+	border-color: #ef4444;
+}
+.runway-card-container.recommended:hover {
+	border-color: #38bdf8;
+}
+.runway-card-container.normal:hover {
+	border-color: #22c55e;
+}
+
+.runway-info-left {
+	flex: 1;
+	min-width: 220px;
+}
+
+.runway-title {
+	margin: 0 0 8px 0;
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	font-size: 1.2rem;
+	color: #f8fafc;
+	flex-wrap: wrap;
+}
+
+.recommended-badge {
+	font-size: 0.75rem;
+	background-color: rgba(56, 189, 248, 0.1);
+	color: #38bdf8;
+	border: 1px solid #38bdf8;
+	padding: 2px 8px;
+	border-radius: 12px;
+	display: flex;
+	align-items: center;
+	gap: 4px;
+}
+
+.danger-message {
+	color: #ef4444;
+	font-size: 0.9rem;
+	display: flex;
+	align-items: center;
+	gap: 4px;
+}
+
+.runway-compass-center {
+	flex-shrink: 0;
+	display: flex;
+	justify-content: center;
+}
+
+.runway-wind-right {
+	flex: 1;
+	min-width: 220px;
+	display: flex;
+	justify-content: flex-end;
+	gap: 20px;
+	color: #94a3b8;
+}
+
+.wind-data {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-end;
+}
+
+.wind-data small {
+	display: flex;
+	align-items: center;
+	gap: 4px;
 }
 
 .wind-num {
-	font-size: 1.2em;
+	margin: 4px 0 0 0;
+	color: #f8fafc;
+	font-size: 1.1rem;
 	font-weight: bold;
-}
-
-@media (max-width: 768px) {
-	.runway-card {
-		flex-direction: column;
-		align-items: flex-start;
-	}
-
-	.runway-card .stats-row {
-		flex-wrap: wrap;
-		gap: 10px;
-	}
 }

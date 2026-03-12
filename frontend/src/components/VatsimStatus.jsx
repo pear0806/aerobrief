@@ -21,25 +21,10 @@ const VatsimStatus = ({ controller, loading }) => {
 
 	return (
 		<div className="panel-card vatsim-section">
-			<h3
-				className="section-title"
-				style={{ display: "flex", alignItems: "center", gap: "8px" }}
-			>
+			<h3 className="section-title">
 				<Headset size={20} color="#38bdf8" /> VATSIM 線上航管
 				{controller.length > 0 && (
-					<span
-						className="live-badge"
-						style={{
-							marginLeft: "auto",
-							fontSize: "0.8rem",
-							backgroundColor: "#ef4444",
-							color: "white",
-							padding: "2px 8px",
-							borderRadius: "12px",
-						}}
-					>
-						● LIVE
-					</span>
+					<span className="live-badge">● LIVE</span>
 				)}
 			</h3>
 

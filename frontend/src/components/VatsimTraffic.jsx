@@ -8,14 +8,7 @@ const VatsimTraffic = ({ arrivals, departures }) => {
 	if (totalFlights === 0) {
 		return (
 			<div className="panel-card traffic-section">
-				<h3
-					className="section-title"
-					style={{
-						display: "flex",
-						alignItems: "center",
-						gap: "8px",
-					}}
-				>
+				<h3 className="section-title">
 					<Plane size={20} color="#38bdf8" /> VATSIM 航班流量
 				</h3>
 				<div className="empty-airspace">

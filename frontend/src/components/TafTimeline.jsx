@@ -65,7 +65,7 @@ const TafTimeline = ({ tafData }) => {
 				})}
 			</div>
 
-			<div className="raw-info" style={{ marginTop: "15px" }}>
+			<div className="raw-info">
 				<small>RAW TAF:</small>
 				<code>{tafData.raw}</code>
 			</div>
