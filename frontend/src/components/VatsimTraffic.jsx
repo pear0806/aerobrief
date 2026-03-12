@@ -1,18 +1,47 @@
 import "../assets/styles/VatsimTraffic.css";
 
+import { Coffee, Plane, PlaneLanding, PlaneTakeoff, Radar } from "lucide-react";
+
 const VatsimTraffic = ({ arrivals, departures }) => {
-	if (arrivals.length === 0 && departures.length === 0) {
-		return null;
+	const totalFlights = arrivals.length + departures.length;
+
+	if (totalFlights === 0) {
+		return (
+			<div className="panel-card traffic-section">
+				<h3
+					className="section-title"
+					style={{
+						display: "flex",
+						alignItems: "center",
+						gap: "8px",
+					}}
+				>
+					<Plane size={20} color="#38bdf8" /> VATSIM 航班流量
+				</h3>
+				<div className="empty-airspace">
+					<Coffee size={48} color="#475569" strokeWidth={1.5} />
+					<h4>目前空域非常安靜</h4>
+					<p>沒有預計抵達或離場的線上航班</p>
+				</div>
+			</div>
+		);
 	}
 
 	return (
-		<div className="traffic-section">
-			<h3 className="section-title">✈️ VATSIM 航班流量</h3>
+		<div className="panel-card traffic-section">
+			<h3
+				className="section-title"
+				style={{ display: "flex", alignItems: "center", gap: "8px" }}
+			>
+				<Plane size={20} color="#38bdf8" /> VATSIM 航班流量
+				<span className="flight-badge">共 {totalFlights} 架次</span>
+			</h3>
 
 			<div className="traffic-grid">
 				<div className="traffic-column">
 					<h4 className="column-title arr-title">
-						🛬 預計抵達 ({arrivals.length})
+						<PlaneLanding size={16} /> 預計抵達
+						<span className="count-tag">{arrivals.length}</span>
 					</h4>
 					<div className="flight-list">
 						{arrivals.length > 0 ? (
@@ -30,29 +59,40 @@ const VatsimTraffic = ({ arrivals, departures }) => {
 										</span>
 									</div>
 									<div className="flight-route">
-										FROM {pilot.departure}
+										<span className="route-label">FR</span>{" "}
+										{pilot.departure || "UNKNOWN"}
 									</div>
 									<div className="flight-details">
-										<span>alt: {pilot.altitude} ft</span> ||{" "}
-										<span>gs: {pilot.groundspeed} kts</span>
+										<span
+											style={{
+												display: "flex",
+												alignItems: "center",
+												gap: "4px",
+											}}
+										>
+											<Radar size={12} /> {pilot.altitude}{" "}
+											ft
+										</span>
+										<span>{pilot.groundspeed} kts</span>
 									</div>
 								</div>
 							))
 						) : (
-							<div className="empty-msg">目前無進場航班</div>
+							<div className="empty-msg">無進場航班</div>
 						)}
 					</div>
 				</div>
 
 				<div className="traffic-column">
 					<h4 className="column-title dep-title">
-						🛫 預計起飛 ({departures.length})
+						<PlaneTakeoff size={16} /> 預計起飛
+						<span className="count-tag">{departures.length}</span>
 					</h4>
 					<div className="flight-list">
 						{departures.length > 0 ? (
 							departures.map((pilot) => (
 								<div
-									key={pilot.name}
+									key={pilot.callsign}
 									className="flight-card dep-card"
 								>
 									<div className="flight-main">
@@ -64,16 +104,26 @@ const VatsimTraffic = ({ arrivals, departures }) => {
 										</span>
 									</div>
 									<div className="flight-route">
-										TO {pilot.arrival}
+										<span className="route-label">TO</span>{" "}
+										{pilot.arrival || "UNKNOWN"}
 									</div>
 									<div className="flight-details">
-										<span>alt: {pilot.altitude} ft</span> ||{" "}
-										<span>gs: {pilot.groundspeed} kts</span>
+										<span
+											style={{
+												display: "flex",
+												alignItems: "center",
+												gap: "4px",
+											}}
+										>
+											<Radar size={12} /> {pilot.altitude}{" "}
+											ft
+										</span>
+										<span>{pilot.groundspeed} kts</span>
 									</div>
 								</div>
 							))
 						) : (
-							<div className="empty-msg">目前無離場航班</div>
+							<div className="empty-msg">無離場航班</div>
 						)}
 					</div>
 				</div>

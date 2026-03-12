@@ -1,130 +1,198 @@
 .traffic-section {
-	margin-top: 20px;
-	background: #1e293b;
-	padding: 15px;
+	display: flex;
+	flex-direction: column;
+}
+
+.traffic-section .section-title {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+}
+
+.flight-badge {
+	font-size: 0.75rem;
+	background: rgba(56, 189, 248, 0.1);
+	color: #38bdf8;
+	padding: 4px 10px;
 	border-radius: 12px;
-	border: 1px solid #334155;
+	border: 1px solid rgba(56, 189, 248, 0.2);
+	font-weight: 600;
+	letter-spacing: 0.5px;
+}
+
+.empty-airspace {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	padding: 40px 20px;
+	text-align: center;
+	background: rgba(15, 23, 42, 0.4);
+	border-radius: 12px;
+	border: 1px dashed rgba(255, 255, 255, 0.1);
+	margin-top: 10px;
+}
+
+.empty-airspace h4 {
+	color: #94a3b8;
+	margin: 15px 0 5px 0;
+	font-size: 1.1rem;
+	font-weight: 600;
+}
+
+.empty-airspace p {
+	color: #64748b;
+	margin: 0;
+	font-size: 0.9rem;
 }
 
 .traffic-grid {
 	display: grid;
 	grid-template-columns: 1fr 1fr;
 	gap: 15px;
-	margin-top: 10px;
+	margin-top: 5px;
 }
 
 .traffic-column {
-	background: #0f172a;
-	border-radius: 8px;
-	padding: 10px;
+	display: flex;
+	flex-direction: column;
+	background: rgba(15, 23, 42, 0.4);
+	border-radius: 12px;
+	overflow: hidden;
+	border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .column-title {
-	margin: 0 0 10px 0;
-	padding-bottom: 8px;
-	border-bottom: 1px solid #334155;
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	margin: 0;
+	padding: 12px 15px;
 	font-size: 0.95rem;
-	text-align: center;
+	font-weight: 600;
+	background: rgba(255, 255, 255, 0.03);
+	border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .arr-title {
-	color: #38bdf8;
+	color: #60a5fa;
+}
+.dep-title {
+	color: #fbbf24;
 }
 
-.dep-title {
-	color: #a3e635;
+.count-tag {
+	margin-left: auto;
+	background: rgba(255, 255, 255, 0.1);
+	color: #f8fafc;
+	padding: 2px 8px;
+	border-radius: 10px;
+	font-size: 0.75rem;
 }
 
 .flight-list {
+	padding: 12px;
 	display: flex;
 	flex-direction: column;
-	gap: 8px;
-	max-height: 250px;
+	gap: 10px;
+	max-height: 400px;
 	overflow-y: auto;
-	scrollbar-width: none;
 }
 
 .flight-list::-webkit-scrollbar {
 	width: 4px;
 }
+
+.flight-list::-webkit-scrollbar-track {
+	background: transparent;
+}
+
 .flight-list::-webkit-scrollbar-thumb {
-	background: #475569;
-	border-radius: 2px;
+	background: #334155;
+	border-radius: 4px;
 }
 
 .flight-card {
-	background: #1e293b;
-	padding: 8px 12px;
-	border-radius: 6px;
+	background: rgba(30, 41, 59, 0.6);
+	border-radius: 8px;
+	padding: 12px;
 	border-left: 3px solid transparent;
+	transition:
+		transform 0.2s,
+		background 0.2s;
+}
+
+.flight-card:hover {
+	transform: translateX(4px);
+	background: rgba(30, 41, 59, 0.9);
 }
 
 .arr-card {
-	border-left-color: #38bdf8;
+	border-left-color: #3b82f6;
 }
 
 .dep-card {
-	border-left-color: #a3e635;
+	border-left-color: #f59e0b;
 }
 
 .flight-main {
 	display: flex;
 	justify-content: space-between;
-	align-items: center;
-	margin-bottom: 4px;
+	align-items: baseline;
+	margin-bottom: 6px;
 }
 
 .callsign {
+	font-weight: 700;
+	font-size: 1.05rem;
 	color: #f8fafc;
-	font-weight: bold;
-	font-family: monospace;
-	font-size: 1.1rem;
+	letter-spacing: 0.5px;
 }
 
-.ac-type {
-	background: #334155;
-	color: #cbd5e1;
+.aircraft-type {
+	font-size: 0.75rem;
+	color: #94a3b8;
+	background: rgba(255, 255, 255, 0.05);
 	padding: 2px 6px;
 	border-radius: 4px;
-	font-size: 0.75rem;
-	font-weight: bold;
 }
 
 .flight-route {
+	font-size: 0.85rem;
+	color: #cbd5e1;
+	margin-bottom: 10px;
+	display: flex;
+	align-items: center;
+	gap: 6px;
+}
+
+.route-label {
+	font-size: 0.65rem;
+	background: #334155;
 	color: #94a3b8;
-	font-size: 0.8rem;
+	padding: 2px 4px;
+	border-radius: 3px;
+	font-weight: bold;
 }
 
 .flight-details {
+	display: flex;
+	justify-content: space-between;
 	font-size: 0.8rem;
 	color: #94a3b8;
-	margin-top: 4px;
+	border-top: 1px solid rgba(255, 255, 255, 0.05);
+	padding-top: 8px;
 }
 
 .empty-msg {
 	text-align: center;
-	color: #64748b;
-	padding: 10px;
+	padding: 20px 0;
+	color: #475569;
 	font-size: 0.85rem;
 }
 
 @media (max-width: 768px) {
-	.vatsim-list {
-		padding-right: 10px;
-	}
-
 	.traffic-grid {
-		display: flex;
-		flex-direction: column;
-		width: calc(100% - 15px);
-	}
-
-	.traffic-column {
-		width: 100%;
-		overflow-x: auto;
-	}
-
-	.flight-list {
-		padding-right: 10px;
+		grid-template-columns: 1fr;
 	}
 }

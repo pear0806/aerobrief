@@ -57,7 +57,7 @@ const RadarMap = ({ arrivals, departures, airportLat, airportLon, icao }) => {
 				Radar)
 			</h3>
 
-			<div>
+			<div className="radar-map-container">
 				<MapContainer
 					center={center}
 					zoom={10}
@@ -103,7 +103,7 @@ const RadarMap = ({ arrivals, departures, airportLat, airportLon, icao }) => {
 											color: "#cbd5e1",
 										}}
 									>
-										({pilot.aircraft})
+										({pilot.aircraft_short})
 									</span>
 									<hr
 										style={{
