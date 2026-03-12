@@ -122,16 +122,24 @@ body {
 }
 
 .panel-card {
-	background-color: var(--card-bg);
-	border: 1px solid var(--card-border);
-	border-radius: var(--radius-lg);
+	background-color: rgba(30, 41, 59, 0.6);
+
+	backdrop-filter: blur(12px);
+	-webkit-backdrop-filter: blur(12px);
+
+	border: 1px solid rgba(255, 255, 255, 0.08);
+	border-top: 1px solid rgba(255, 255, 255, 0.15);
+	border-radius: 16px;
 	padding: 24px;
-	box-shadow:
-		0 10px 15px -3px rgba(0, 0, 0, 0.1),
-		0 4px 6px -4px rgba(0, 0, 0, 0.1);
-	transition:
-		transform 0.2s ease,
-		box-shadow 0.2s ease;
+
+	box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+	transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.panel-card:hover {
+	transform: translateY(-4px);
+	box-shadow: 0 15px 35px rgba(0, 0, 0, 0.7);
+	border-color: rgba(56, 189, 248, 0.3);
 }
 
 .panel-card .section-title {
@@ -139,8 +147,8 @@ body {
 	margin-bottom: 20px;
 	font-size: 1.1rem;
 	font-weight: 600;
-	color: var(--text-muted);
-	border-bottom: 1px solid var(--card-border);
+	color: #94a3b8;
+	border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 	padding-bottom: 12px;
 	text-transform: uppercase;
 	letter-spacing: 0.5px;
