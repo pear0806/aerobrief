@@ -9,7 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from notam_parser import process_notams
 
 load_dotenv()
-AVWX_TOKEN = os.getenv("AVWX_TOKEN")
+AVWX_token = os.getenv("AVWX_TOKEN").strip().replace('"', '').replace("'", "")
 
 app = FastAPI(
     title="AeroBrief API",
