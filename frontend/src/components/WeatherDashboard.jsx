@@ -42,7 +42,7 @@ const WeatherDashboard = ({ data, pressureUnit, setPressureUnit }) => {
 					<div className="value">
 						{data.common.wind_direction.value == null
 							? "VRB"
-							: `${data.common.wind_direction.value}°`}
+							: `${data.common.wind_direction?.value}°`}
 					</div>
 				</div>
 				<div className="metric-item">
@@ -93,7 +93,7 @@ const WeatherDashboard = ({ data, pressureUnit, setPressureUnit }) => {
 				>
 					<label>密度高度 (DA)</label>
 					<div className="value">
-						{da ? da.toLocaleString() : "N/A"}
+						{da !== null ? da.toLocaleString() : "N/A"}
 						<small className="metricUnit">ft</small>
 					</div>
 					<div

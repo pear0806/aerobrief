@@ -92,7 +92,7 @@ async def get_weather(icao: str):
                     "heading": round(rwy.get("bearing1", 0)),
                     "isFirst": False
                 })
-            if rwy.get("ident1"):
+            if rwy.get("ident2"):
                 formatted_runways.append({
                     "name": rwy.get("ident2"),
                     "heading": round(rwy.get("bearing2", 0)),
@@ -147,9 +147,16 @@ async def get_vatsim(icao: str):
             pilot_info = {
                 "callsign": p.get("callsign"),
                 "name": p.get("name"),
+                "cid": p.get("cid"),
                 "aircraft_short": fp.get("aircraft_short"),
                 "departure": fp.get("departure"),
                 "arrival": fp.get("arrival"),
+                "altitude": p.get("altitude"),
+                "cruising_altitude": fp.get("altitude"),
+                "groundspeed": p.get("groundspeed"),
+                "latitude": p.get("latitude"),
+                "longitude": p.get("longitude"),
+                "heading": p.get("heading")
             }
 
             if pilot_info["departure"] == icao:

@@ -6,6 +6,7 @@ import AircraftSelector from "./components/AircraftSelector";
 import LandingWarning from "./components/LandingWarning";
 import LimitControl from "./components/LimitControl";
 import NotamBoard from "./components/NotamDashborad";
+import Radar from "./components/Radar";
 import RunwayCard from "./components/RunwayCard";
 import RunwayMap from "./components/RunwayMap";
 import SearchBar from "./components/SearchBar";
@@ -215,6 +216,14 @@ function App() {
 							controller={controller}
 							loading={vatsimLoading}
 						></VatsimStatus>
+
+						<Radar
+							arrivals={arrivals}
+							departures={departures}
+							airportLat={data?.common?.latitude}
+							airportLon={data?.common?.longitude}
+							icao={icao}
+						/>
 
 						<VatsimTraffic
 							arrivals={arrivals}

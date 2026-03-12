@@ -18,7 +18,7 @@ const VatsimTraffic = ({ arrivals, departures }) => {
 						{arrivals.length > 0 ? (
 							arrivals.map((pilot) => (
 								<div
-									key={pilot.name}
+									key={pilot.callsign}
 									className="flight-card arr-card"
 								>
 									<div className="flight-main">
@@ -31,6 +31,10 @@ const VatsimTraffic = ({ arrivals, departures }) => {
 									</div>
 									<div className="flight-route">
 										FROM {pilot.departure}
+									</div>
+									<div className="flight-details">
+										<span>alt: {pilot.altitude} ft</span> ||{" "}
+										<span>gs: {pilot.groundspeed} kts</span>
 									</div>
 								</div>
 							))
@@ -61,6 +65,10 @@ const VatsimTraffic = ({ arrivals, departures }) => {
 									</div>
 									<div className="flight-route">
 										TO {pilot.arrival}
+									</div>
+									<div className="flight-details">
+										<span>alt: {pilot.altitude} ft</span> ||{" "}
+										<span>gs: {pilot.groundspeed} kts</span>
 									</div>
 								</div>
 							))
