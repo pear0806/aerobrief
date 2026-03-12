@@ -9,7 +9,16 @@ import {
 } from "../utils/physics.js";
 
 const WeatherDashboard = ({ data, pressureUnit, setPressureUnit }) => {
-	if (!data) return null;
+	if (!data || !data.common) {
+		return (
+			<div
+				className="panel-card weather-dashboard"
+				style={{ textAlign: "center", color: "#ef4444" }}
+			>
+				❌ 無法取得氣象資料，請稍後再試。
+			</div>
+		);
+	}
 
 	const toggleUnit = () => {
 		setPressureUnit((prev) => (prev === "hPa" ? "inHg" : "hPa"));
