@@ -3,6 +3,7 @@ import "./assets/styles/App.css";
 import { useEffect, useMemo, useState } from "react";
 
 import AircraftSelector from "./components/AircraftSelector";
+import FadeIn from "./components/FadeIn";
 import LandingWarning from "./components/LandingWarning";
 import LimitControl from "./components/LimitControl";
 import NotamBoard from "./components/NotamDashborad";
@@ -180,19 +181,19 @@ function App() {
 
 	return (
 		<div className="app-container">
-			<h1 className="app-main-title">✈️ AeroBrief</h1>
-
-			<SearchBar
-				icao={icao}
-				setIcao={setIcao}
-				onSearch={handleOnSearch}
-				loading={loading || vatsimLoading}
-				favorite={favorite}
-				toggleFavorite={toggleFavorite}
-			/>
+			<div className="sticky-header">
+				<h1 className="app-main-title">✈️ AeroBrief</h1>
+				<SearchBar
+					icao={icao}
+					setIcao={setIcao}
+					onSearch={handleOnSearch}
+					loading={loading || vatsimLoading}
+					favorite={favorite}
+					toggleFavorite={toggleFavorite}
+				/>
+			</div>
 
 			{error && <div className="error-message">⚠️ {error}</div>}
-
 			{vatsimError && (
 				<div className="error-message">⚠️ {vatsimError}</div>
 			)}
@@ -201,119 +202,139 @@ function App() {
 				<Skeleton />
 			) : (
 				data && (
-					<>
-						<WeatherDashboard
-							data={data}
-							pressureUnit={pressureUnit}
-							setPressureUnit={setPressureUnit}
-						/>
+					<div className="dashboard-layout">
+						<div className="left-column">
+							<FadeIn delay={0.1}>
+								<WeatherDashboard
+									data={data}
+									pressureUnit={pressureUnit}
+									setPressureUnit={setPressureUnit}
+								/>
+							</FadeIn>
 
-						<TafTimeline tafData={data.taf} />
+							<FadeIn delay={0.2}>
+								<TafTimeline tafData={data.taf} />
+							</FadeIn>
 
-						<NotamBoard notams={data.notam} />
-
-						<VatsimStatus
-							controller={controller}
-							loading={vatsimLoading}
-						></VatsimStatus>
-
-						<Radar
-							arrivals={arrivals}
-							departures={departures}
-							airportLat={data?.common?.latitude}
-							airportLon={data?.common?.longitude}
-							icao={icao}
-						/>
-
-						<VatsimTraffic
-							arrivals={arrivals}
-							departures={departures}
-						/>
-
-						<AircraftSelector
-							aircraft={aircraft}
-							setAircraft={setAircraft}
-							setCrossWindLimit={setCrossWindLimit}
-							setTailWindLimit={setTailWindLimit}
-							setHeadWindLimit={setHeadWindLimit}
-						/>
-
-						<div className="limit-setting-section">
-							<LimitControl
-								label="✈️ 機型側風限制"
-								value={CrossWindLimit}
-								setValue={(val) => {
-									setAircraft("CUSTOM");
-									setCrossWindLimit(val);
-								}}
-							/>
-							<LimitControl
-								label="✈️ 機型順風限制"
-								value={TailWindLimit}
-								setValue={(val) => {
-									setAircraft("CUSTOM");
-									setTailWindLimit(val);
-								}}
-							/>
-							<LimitControl
-								label="✈️ 機型頂風限制"
-								value={HeadWindLimit}
-								setValue={(val) => {
-									setAircraft("CUSTOM");
-									setHeadWindLimit(val);
-								}}
-							/>
+							<FadeIn delay={0.3}>
+								<NotamBoard notams={data.notam} />
+							</FadeIn>
 						</div>
 
-						<LandingWarning data={data} />
+						<div className="right-column">
+							<FadeIn delay={0.15}>
+								<VatsimStatus
+									controller={controller}
+									loading={vatsimLoading}
+								/>
+							</FadeIn>
 
-						<h3 className="section-title">跑道分析</h3>
-						<div
-							style={{
-								display: "flex",
-								flexDirection: "column",
-								gap: "10px",
-							}}
-						>
-							{processedRunways.length > 0 ? (
-								<>
-									<RunwayMap
-										key={icao}
-										runways={processedRunways}
-										windDir={windDir}
-									></RunwayMap>
-									{processedRunways.map((rwy) => {
-										return (
-											<RunwayCard
-												key={rwy.name}
-												runwayName={rwy.name}
-												heading={rwy.heading}
-												windDir={windDir}
-												crosswind={rwy.crosswind}
-												headwind={rwy.headwind}
-												isHeadwind={rwy.headwind > 0}
-												isDanger={rwy.isDanger}
-												dangerMessage={
-													rwy.dangerMessage
-												}
-												index={rwy.index}
-												isFirst={rwy.isFirst}
-											/>
-										);
-									})}
-								</>
-							) : (
-								<p
+							<FadeIn delay={0.25}>
+								<Radar
+									arrivals={arrivals}
+									departures={departures}
+									airportLat={data?.common?.latitude}
+									airportLon={data?.common?.longitude}
+									icao={icao}
+								/>
+							</FadeIn>
+
+							<FadeIn delay={0.35}>
+								<VatsimTraffic
+									arrivals={arrivals}
+									departures={departures}
+								/>
+							</FadeIn>
+						</div>
+
+						<div className="bottom-full-width">
+							<FadeIn delay={0.4}>
+								<AircraftSelector
+									aircraft={aircraft}
+									setAircraft={setAircraft}
+									setCrossWindLimit={setCrossWindLimit}
+									setTailWindLimit={setTailWindLimit}
+									setHeadWindLimit={setHeadWindLimit}
+								/>
+
+								<div className="limit-setting-section">
+									<LimitControl
+										label="✈️ 機型側風限制"
+										value={CrossWindLimit}
+										setValue={(val) => {
+											setAircraft("CUSTOM");
+											setCrossWindLimit(val);
+										}}
+									/>
+									<LimitControl
+										label="✈️ 機型順風限制"
+										value={TailWindLimit}
+										setValue={(val) => {
+											setAircraft("CUSTOM");
+											setTailWindLimit(val);
+										}}
+									/>
+									<LimitControl
+										label="✈️ 機型頂風限制"
+										value={HeadWindLimit}
+										setValue={(val) => {
+											setAircraft("CUSTOM");
+											setHeadWindLimit(val);
+										}}
+									/>
+								</div>
+
+								<LandingWarning data={data} />
+
+								<h3 className="section-title">跑道分析</h3>
+								<div
 									style={{
-										textAlign: "center",
-										color: "#666",
+										display: "flex",
+										flexDirection: "column",
+										gap: "10px",
 									}}
 								>
-									無跑道資料
-								</p>
-							)}
+									{processedRunways.length > 0 ? (
+										<>
+											<RunwayMap
+												key={icao}
+												runways={processedRunways}
+												windDir={windDir}
+											/>
+											{processedRunways.map((rwy) => (
+												<RunwayCard
+													key={rwy.name}
+													runwayName={rwy.name}
+													heading={rwy.heading}
+													windDir={windDir}
+													crosswind={rwy.crosswind}
+													headwind={rwy.headwind}
+													isHeadwind={
+														rwy.headwind > 0
+													}
+													isDanger={rwy.isDanger}
+													dangerMessage={
+														rwy.dangerMessage
+													}
+													index={rwy.index}
+													isFirst={rwy.isFirst}
+												/>
+											))}
+										</>
+									) : (
+										<p
+											style={{
+												textAlign: "center",
+												color: "#666",
+											}}
+										>
+											無跑道資料
+										</p>
+									)}
+								</div>
+							</FadeIn>
 						</div>
-					</>
+					</div>
 				)
 			)}
 		</div>

@@ -1,26 +1,33 @@
 import "../assets/styles/Radar.css";
 
 import L from "leaflet";
+import { PlaneLanding, PlaneTakeoff, Radar as RadarIcon } from "lucide-react";
 import { useEffect } from "react";
 import { MapContainer, Marker, Popup, TileLayer, useMap } from "react-leaflet";
 
 const MapUpdater = ({ center }) => {
 	const map = useMap();
 	useEffect(() => {
-		if (center) {
-			map.setView(center, 10);
-		}
+		if (center) map.setView(center, 10);
 	}, [center, map]);
 	return null;
 };
+
+const getAirplaneSvg = (color, heading) => `
+	<div style="transform: rotate(${heading || 0}deg); display: flex; justify-content: center; align-items: center; width: 100%; height: 100%;">
+		<svg width="24" height="24" viewBox="0 0 24 24" fill="${color}" stroke="#0f172a" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="filter: drop-shadow(0px 2px 4px rgba(0,0,0,0.8));">
+			<path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.2-1.1.5l-1.3 2.6c-.2.4-.1.9.3 1.2L9 14l-3.5 3.5-2.7-.9c-.4-.1-.8.1-1 .5l-.8 1.6c-.1.3 0 .7.3.9l4.5 1.2 1.2 4.5c.2.3.6.4.9.3l1.6-.8c.4-.2.6-.6.5-1l-.9-2.7 3.5-3.5 3.5 6.3c.3.4.8.5 1.2.3l2.6-1.3c.3-.2.6-.6.5-1.1z"/>
+		</svg>
+	</div>
+`;
 
 const createAirplaneIcon = (heading, isArrival) => {
 	const color = isArrival ? "#60a5fa" : "#fbbf24";
 	return L.divIcon({
 		className: "custom-airplane-icon",
-		html: `<div style="transform: rotate(${heading || 0}deg); color: ${color}; font-size: 24px; text-shadow: 0px 0px 4px #000;">✈</div>`,
-		iconSize: [24, 24],
-		iconAnchor: [12, 12],
+		html: getAirplaneSvg(color, heading),
+		iconSize: [28, 28],
+		iconAnchor: [14, 14],
 	});
 };
 
@@ -35,15 +42,20 @@ const RadarMap = ({ arrivals, departures, airportLat, airportLon, icao }) => {
 	if (!airportLat || !airportLon) return null;
 
 	const center = [airportLat, airportLon];
-
 	const allTraffic = [
 		...arrivals.map((p) => ({ ...p, isArrival: true })),
 		...departures.map((p) => ({ ...p, isArrival: false })),
 	].filter((p) => p.latitude && p.longitude);
 
 	return (
-		<div className="radar-map-wrapper">
-			<h3 className="section-title">📡 終端空域雷達 (Live Radar)</h3>
+		<div className="panel-card radar-map-wrapper">
+			<h3
+				className="section-title"
+				style={{ display: "flex", alignItems: "center", gap: "8px" }}
+			>
+				<RadarIcon size={20} color="#38bdf8" /> 終端空域雷達 (Live
+				Radar)
+			</h3>
 
 			<div className="radar-map-container">
 				<MapContainer
@@ -53,11 +65,9 @@ const RadarMap = ({ arrivals, departures, airportLat, airportLon, icao }) => {
 				>
 					<TileLayer
 						url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-						attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+						attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
 					/>
-
 					<MapUpdater center={center} />
-
 					<Marker position={center} icon={airportIcon}>
 						<Popup className="custom-popup">
 							<strong style={{ color: "#ef4444" }}>{icao}</strong>
@@ -134,28 +144,26 @@ const RadarMap = ({ arrivals, departures, airportLat, airportLon, icao }) => {
 				</MapContainer>
 			</div>
 
-			<div
-				className="map-legend"
-				style={{
-					marginTop: "10px",
-					display: "flex",
-					gap: "15px",
-					fontSize: "0.85rem",
-				}}
-			>
-				<span>
-					<span style={{ color: "#60a5fa", fontSize: "1.2rem" }}>
-						✈
-					</span>{" "}
-					抵達航班
+			<div className="map-legend">
+				<span
+					style={{
+						display: "flex",
+						alignItems: "center",
+						gap: "4px",
+					}}
+				>
+					<PlaneLanding size={18} color="#60a5fa" /> 抵達航班
 				</span>
-				<span>
-					<span style={{ color: "#fbbf24", fontSize: "1.2rem" }}>
-						✈
-					</span>{" "}
-					離場航班
+				<span
+					style={{
+						display: "flex",
+						alignItems: "center",
+						gap: "4px",
+					}}
+				>
+					<PlaneTakeoff size={18} color="#fbbf24" /> 離場航班
 				</span>
-				<span style={{ color: "#94a3b8" }}>
+				<span className="legend-hint">
 					(點擊飛機圖示可查看詳細資訊)
 				</span>
 			</div>

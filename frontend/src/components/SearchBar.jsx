@@ -1,5 +1,6 @@
 import "../assets/styles/SearchBar.css";
 
+import { Search, Star } from "lucide-react";
 import { useEffect, useRef } from "react";
 
 const SearchBar = ({
@@ -13,15 +14,11 @@ const SearchBar = ({
 	const inputRef = useRef(null);
 
 	useEffect(() => {
-		if (inputRef.current) {
-			inputRef.current.focus();
-		}
+		if (inputRef.current) inputRef.current.focus();
 	}, []);
 
 	const handleKeyDown = (e) => {
-		if (e.key === "Enter" && !loading) {
-			onSearch();
-		}
+		if (e.key === "Enter" && !loading) onSearch();
 	};
 
 	const isFavorited = favorite.includes(icao);
@@ -44,7 +41,11 @@ const SearchBar = ({
 					className={`star-btn ${isFavorited ? "isFavorited" : ""}`}
 					onClick={() => toggleFavorite(icao)}
 				>
-					{isFavorited ? "★" : "☆"}
+					<Star
+						fill={isFavorited ? "#fbbf24" : "none"}
+						color={isFavorited ? "#fbbf24" : "#475569"}
+						size={24}
+					/>
 				</button>
 
 				<button
@@ -52,28 +53,31 @@ const SearchBar = ({
 					onClick={onSearch}
 					disabled={loading || !icao}
 				>
-					{loading ? "雷達掃描中..." : "查詢氣象"}
+					{loading ? (
+						"掃描中..."
+					) : (
+						<>
+							<Search size={18} style={{ marginRight: "6px" }} />{" "}
+							查詢氣象
+						</>
+					)}
 				</button>
 			</div>
-			{favorite.length > 0 ? (
+			{favorite.length > 0 && (
 				<div className="favorite-list">
 					<span>收藏</span>
-					{favorite.map((fav) => {
-						return (
-							<button
-								key={fav}
-								onClick={() => {
-									setIcao(fav);
-									onSearch(fav);
-								}}
-							>
-								{fav}
-							</button>
-						);
-					})}
+					{favorite.map((fav) => (
+						<button
+							key={fav}
+							onClick={() => {
+								setIcao(fav);
+								onSearch(fav);
+							}}
+						>
+							{fav}
+						</button>
+					))}
 				</div>
-			) : (
-				""
 			)}
 		</>
 	);

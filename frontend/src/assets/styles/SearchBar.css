@@ -1,11 +1,11 @@
 .search-container {
 	display: flex;
-	gap: 10px;
-	margin-bottom: 20px;
-	width: 580px;
 	justify-content: center;
+	gap: 10px;
+	margin-bottom: 15px;
+	width: 100%;
+	max-width: 580px;
 }
-
 .search-input {
 	width: 200px;
 	background: #1e293b;
@@ -61,6 +61,7 @@
 .favorite-list {
 	margin-top: 10px;
 	display: flex;
+	justify-content: center;
 	gap: 8px;
 	flex-wrap: wrap;
 	margin-bottom: 10px;
