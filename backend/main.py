@@ -109,7 +109,7 @@ async def get_weather(icao: str):
         return final_data
 
 
-@app.get("/api/vatsim/${icao}")
+@app.get("/api/vatsim/{icao}")
 async def get_vatsim(icao: str):
     icao = icao.upper()
     url = "https://data.vatsim.net/v3/vatsim-data.json"
@@ -146,14 +146,10 @@ async def get_vatsim(icao: str):
         else:
             pilot_info = {
                 "callsign": p.get("callsign"),
-                "cid": p.get("cid"),
                 "name": p.get("name"),
-                "aircraft": fp.get("aircraft_short"),
+                "aircraft_short": fp.get("aircraft_short"),
                 "departure": fp.get("departure"),
                 "arrival": fp.get("arrival"),
-                "altitude": p.get("altitude"),
-                "crusing_altitude": fp.get("altitude"),
-                "groundspeed": p.get(""),
             }
 
             if pilot_info["departure"] == icao:
@@ -163,12 +159,9 @@ async def get_vatsim(icao: str):
                 arrivals.append(pilot_info)
 
     final_data = {
-        "icao": icao,
         "controllers": controllers,
-        "depatures": departures,
+        "departures": departures,
         "arrivals": arrivals
     }
-
-    print("vatsim data:", final_data)
 
     return final_data
