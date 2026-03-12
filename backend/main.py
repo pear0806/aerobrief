@@ -46,7 +46,8 @@ async def get_weather(icao: str):
     if not AVWX_TOKEN:
         return {"error": "伺服器遺失 AVWX_TOKEN"}
 
-    avwx_headers = {"Authorization": f"{AVWX_TOKEN}"}
+    avwx_headers = {"Authorization": f"{AVWX_TOKEN}",
+                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"}
     faa_headers = {
         "User-Agent": "Mozilla/5.0",
         "Content-Type": "application/x-www-form-urlencoded"
@@ -70,7 +71,8 @@ async def get_weather(icao: str):
         taf_res, metar_res, station_res, notam_res = responses
 
         if metar_res.status_code != 200:
-            return {"error": f"無法獲取 {icao} 的氣象資料，請確認機場代碼是否正確。"}
+            error_detail = metar_res.text[:50]
+            return {"error": f"無法獲取 {icao} 的氣象資料。錯誤碼: {metar_res.status_code}, 原因: {error_detail}"}
 
         taf_data = taf_res.json() if taf_res.status_code == 200 else None
         metar_data = metar_res.json() if metar_res.status_code == 200 else None
