@@ -9,7 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from notam_parser import process_notams
 
 load_dotenv()
-AVWX_token = os.getenv("AVWX_TOKEN").strip().replace('"', '').replace("'", "")
+AVWX_TOKEN = os.getenv("AVWX_TOKEN").strip().replace('"', '').replace("'", "")
 
 app = FastAPI(
     title="AeroBrief API",
@@ -71,8 +71,7 @@ async def get_weather(icao: str):
         taf_res, metar_res, station_res, notam_res = responses
 
         if metar_res.status_code != 200:
-            error_detail = metar_res.text[:50]
-            return {"error": f"無法獲取 {icao} 的氣象資料。錯誤碼: {metar_res.status_code}, 原因: {error_detail}"}
+            return {"error": f"無法獲取 {icao} 的氣象資料。錯誤碼: {metar_res.status_code}, 原因: {metar_res.text}"}
 
         taf_data = taf_res.json() if taf_res.status_code == 200 else None
         metar_data = metar_res.json() if metar_res.status_code == 200 else None
