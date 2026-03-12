@@ -184,11 +184,23 @@
 	padding-top: 8px;
 }
 
+.flight-details span {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+}
+
 .empty-msg {
 	text-align: center;
 	padding: 20px 0;
 	color: #475569;
 	font-size: 0.85rem;
+}
+
+.title-left {
+	display: flex;
+	align-items: center;
+	gap: 8px;
 }
 
 @media (max-width: 768px) {

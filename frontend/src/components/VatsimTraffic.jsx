@@ -22,15 +22,15 @@ const VatsimTraffic = ({ arrivals, departures }) => {
 
 	return (
 		<div className="panel-card traffic-section">
-			<h3
-				className="section-title"
-				style={{ display: "flex", alignItems: "center", gap: "8px" }}
-			>
-				<Plane size={20} color="#38bdf8" /> VATSIM 航班流量
+			<h3 className="section-title">
+				<div className="title-left">
+					<Plane size={20} color="#38bdf8" /> VATSIM 航班流量
+				</div>
 				<span className="flight-badge">共 {totalFlights} 架次</span>
 			</h3>
 
 			<div className="traffic-grid">
+				{/* === 抵達航班 === */}
 				<div className="traffic-column">
 					<h4 className="column-title arr-title">
 						<PlaneLanding size={16} /> 預計抵達
@@ -56,13 +56,7 @@ const VatsimTraffic = ({ arrivals, departures }) => {
 										{pilot.departure || "UNKNOWN"}
 									</div>
 									<div className="flight-details">
-										<span
-											style={{
-												display: "flex",
-												alignItems: "center",
-												gap: "4px",
-											}}
-										>
+										<span>
 											<Radar size={12} /> {pilot.altitude}{" "}
 											ft
 										</span>
@@ -76,6 +70,7 @@ const VatsimTraffic = ({ arrivals, departures }) => {
 					</div>
 				</div>
 
+				{/* === 離場航班 === */}
 				<div className="traffic-column">
 					<h4 className="column-title dep-title">
 						<PlaneTakeoff size={16} /> 預計起飛
@@ -101,13 +96,7 @@ const VatsimTraffic = ({ arrivals, departures }) => {
 										{pilot.arrival || "UNKNOWN"}
 									</div>
 									<div className="flight-details">
-										<span
-											style={{
-												display: "flex",
-												alignItems: "center",
-												gap: "4px",
-											}}
-										>
+										<span>
 											<Radar size={12} /> {pilot.altitude}{" "}
 											ft
 										</span>

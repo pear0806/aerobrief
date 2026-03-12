@@ -9,14 +9,7 @@ const NotamBoard = ({ notams }) => {
 	if (!notams || notams.length === 0) {
 		return (
 			<div className="panel-card notam-board empty">
-				<h3
-					className="section-title"
-					style={{
-						display: "flex",
-						alignItems: "center",
-						gap: "8px",
-					}}
-				>
+				<h3 className="section-title">
 					<FileText size={20} color="#38bdf8" /> 飛航公告 (NOTAM)
 				</h3>
 				<p style={{ color: "#94a3b8" }}>目前該機場沒有任何飛航公告。</p>
@@ -39,10 +32,7 @@ const NotamBoard = ({ notams }) => {
 
 	return (
 		<div className="panel-card notam-board">
-			<h3
-				className="section-title"
-				style={{ display: "flex", alignItems: "center", gap: "8px" }}
-			>
+			<h3 className="section-title">
 				<FileText size={20} color="#38bdf8" /> 飛航公告 (NOTAM)
 			</h3>
 

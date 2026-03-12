@@ -49,10 +49,7 @@ const RadarMap = ({ arrivals, departures, airportLat, airportLon, icao }) => {
 
 	return (
 		<div className="panel-card radar-map-wrapper">
-			<h3
-				className="section-title"
-				style={{ display: "flex", alignItems: "center", gap: "8px" }}
-			>
+			<h3 className="section-title">
 				<RadarIcon size={20} color="#38bdf8" /> 終端空域雷達 (Live
 				Radar)
 			</h3>

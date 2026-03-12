@@ -23,35 +23,12 @@ const WeatherDashboard = ({ data, pressureUnit, setPressureUnit }) => {
 
 	return (
 		<div className="panel-card weather-dashboard">
-			<h3
-				className="section-title"
-				style={{
-					display: "flex",
-					alignItems: "center",
-					gap: "8px",
-					justifyContent: "space-between",
-					marginTop: 0,
-				}}
-			>
-				<div
-					style={{
-						display: "flex",
-						alignItems: "center",
-						gap: "8px",
-					}}
-				>
-					<CloudSun size={20} color="#38bdf8" />
-					{data.common.station}{" "}
-					{data.common.iata ? `(${data.common.iata})` : ""} 氣象
-				</div>
+			<h3 className="section-title">
+				<CloudSun size={20} color="#38bdf8" />
+				{data.common.station}{" "}
+				{data.common.iata ? `(${data.common.iata})` : ""} 氣象
 				<span
-					className={`flight-rules rule-${data.common.flight_rules}`}
-					style={{
-						fontSize: "0.8rem",
-						padding: "4px 10px",
-						borderRadius: "12px",
-						border: "none",
-					}}
+					className={`flight-rules rule-${data.common.flight_rules} weather-title-wrap`}
 				>
 					{data.common.flight_rules}
 				</span>
