@@ -109,7 +109,7 @@ async def get_weather(icao: str):
         return final_data
 
 
-@app.get("api/vatsim/${icao}")
+@app.get("/api/vatsim/${icao}")
 async def get_vatsim(icao: str):
     icao = icao.upper()
     url = "https://data.vatsim.net/v3/vatsim-data.json"
@@ -125,16 +125,50 @@ async def get_vatsim(icao: str):
     controllers = []
     for c in data.get("controllers", []):
         callsign = c.get("callsign", "")
-        if callsign.startswith(icao):
+        if callsign.upper().startswith(icao):
             controllers.append({
                 "callsign": callsign,
                 "frequency": c.get("frequency"),
                 "name": c.get("name")
             })
+
+    order = ["DLE", "GND", "TWR", "DEP", "APP", "CTR"]
+    order_map = {suffix: index for index, suffix in enumerate(order)}
+    controllers.sort(key=lambda x: order_map.get(
+        x["callsign"].upper().split("_")[-1], 99))
+
     departures, arrivals = [], []
 
     for p in data.get("pilots", []):
         fp = p.get("flight_plan")
-        if not p:
+        if not fp:
             continue
         else:
+            pilot_info = {
+                "callsign": p.get("callsign"),
+                "cid": p.get("cid"),
+                "name": p.get("name"),
+                "aircraft": fp.get("aircraft_short"),
+                "departure": fp.get("departure"),
+                "arrival": fp.get("arrival"),
+                "altitude": p.get("altitude"),
+                "crusing_altitude": fp.get("altitude"),
+                "groundspeed": p.get(""),
+            }
+
+            if pilot_info["departure"] == icao:
+                departures.append(pilot_info)
+
+            if pilot_info["arrival"] == icao:
+                arrivals.append(pilot_info)
+
+    final_data = {
+        "icao": icao,
+        "controllers": controllers,
+        "depatures": departures,
+        "arrivals": arrivals
+    }
+
+    print("vatsim data:", final_data)
+
+    return final_data

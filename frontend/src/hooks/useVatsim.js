@@ -8,63 +8,23 @@ export const useVatsim = (icao) => {
 	const [departures, setDepartures] = useState([]);
 
 	const fetchVatsimData = async (overrideIcao) => {
-		if (overrideIcao) {
-			icao = overrideIcao;
-		}
-		if (!icao) return;
+		const targetIcao = overrideIcao || icao;
+
+		if (targetIcao) return;
 
 		setVatsimLoading(true);
 		setVatsimError(null);
 		try {
-			const res = await fetch(
-				"https://data.vatsim.net/v3/vatsim-data.json",
+			const response = await fetch(
+				`http://127.0.0.1:8000/api/vatsim/${targetIcao}`,
 			);
-			if (!res.ok) throw new Error("fetch VATSIM data error");
+			if (!response.ok) throw new Error("fetch VATSIM data error");
 
-			const data = await res.json();
+			const data = await response.json();
 			console.log("vatsim data : ", data);
-
-			// handle ATC list
-			const airportController = data.controllers.filter((c) => {
-				const callsign = c.callsign.toUpperCase();
-				return callsign.startsWith(icao.toUpperCase() + "_");
-			});
-
-			const order = ["DEL", "GND", "TWR", "DEP", "APP", "CTR"];
-			airportController.sort((a, b) => {
-				const getSuffix = (cs) => cs.split("_").pop();
-				const indexA = order.indexOf(getSuffix(a.callsign));
-				const indexB = order.indexOf(getSuffix(b.callsign));
-				return (
-					(indexA === -1 ? 99 : indexA) -
-					(indexB === -1 ? 99 : indexB)
-				);
-			});
-
-			setController(airportController);
-
-			// handle Pilot list
-			const allPilots = data.pilots || [];
-			let arrPilots = [];
-			let depPilots = [];
-
-			allPilots.forEach((pilot) => {
-				if (pilot.flight_plan) {
-					const FPL = pilot.flight_plan;
-					const targetICAO = icao.toUpperCase();
-
-					if (FPL.arrival === targetICAO) {
-						arrPilots.push(pilot);
-					}
-
-					if (FPL.departure === targetICAO) {
-						depPilots.push(pilot);
-					}
-				}
-			});
-
-			setArrivals(arrPilots);
-			setDepartures(depPilots);
+			setController(data.controllers);
+			setArrivals(data.arrivals);
+			setDepartures(data.departures);
 		} catch (err) {
 			console.error(err);
 			setVatsimError(err.message);
