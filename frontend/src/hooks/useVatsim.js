@@ -15,8 +15,10 @@ export const useVatsim = (icao) => {
 		setVatsimLoading(true);
 		setVatsimError(null);
 		try {
+			const API_BASE_URL =
+				import.meta.VITE_ENV_API_URL || "http://127.0.0.1:8000";
 			const response = await fetch(
-				`http://127.0.0.1:8000/api/vatsim/${targetIcao}`,
+				`${API_BASE_URL}/api/vatsim/${targetIcao}`,
 			);
 			if (!response.ok) throw new Error("fetch VATSIM data error");
 

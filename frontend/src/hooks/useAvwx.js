@@ -14,8 +14,10 @@ export const useAvwx = (icaoCode) => {
 		setData(null);
 
 		try {
+			const API_BASE_URL =
+				import.meta.VITE_ENV_API_URL || "http://127.0.0.1:8000";
 			const response = await fetch(
-				`http://127.0.0.1:8000/api/weather/${targetIcao}`,
+				`${API_BASE_URL}/api/weather/${targetIcao}`,
 			);
 
 			if (!response.ok) {
