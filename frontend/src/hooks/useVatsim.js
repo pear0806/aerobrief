@@ -9,6 +9,10 @@ export const useVatsim = (icao) => {
 
 	const currentIcaoRef = useRef(icao);
 
+	useEffect(() => {
+		currentIcaoRef.current = icao;
+	}, [icao]);
+
 	const fetchVatsimData = async (isBackgroundUpdate = false) => {
 		const targetIcao = currentIcaoRef.current;
 		if (!targetIcao) return;
