@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 export const useVatsim = (icao) => {
 	const [controller, setController] = useState([]);
@@ -7,19 +7,27 @@ export const useVatsim = (icao) => {
 	const [arrivals, setArrivals] = useState([]);
 	const [departures, setDepartures] = useState([]);
 
-	const fetchVatsimData = async (overrideIcao) => {
-		const targetIcao = overrideIcao || icao;
+	const currentIcaoRef = useRef(icao);
 
+	const fetchVatsimData = async (isBackgroundUpdate = false) => {
+		const targetIcao = currentIcaoRef.current;
 		if (!targetIcao) return;
 
-		setVatsimLoading(true);
+		currentIcaoRef.current = targetIcao;
+
+		if (!isBackgroundUpdate) {
+			setVatsimLoading(true);
+		}
+
 		setVatsimError(null);
+
 		try {
 			const API_BASE_URL =
 				import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
 			const response = await fetch(
 				`${API_BASE_URL}/api/vatsim/${targetIcao}`,
 			);
+
 			if (!response.ok) throw new Error("fetch VATSIM data error");
 
 			const data = await response.json();
@@ -37,9 +45,21 @@ export const useVatsim = (icao) => {
 			setArrivals([]);
 			setDepartures([]);
 		} finally {
-			setVatsimLoading(false);
+			if (!isBackgroundUpdate) {
+				setVatsimLoading(false);
+			}
 		}
 	};
+
+	useEffect(() => {
+		if (!currentIcaoRef.current) return;
+
+		const intervalId = setInterval(() => {
+			fetchVatsimData(currentIcaoRef.current, true);
+		}, 15000);
+
+		return () => clearInterval(intervalId);
+	}, [icao]);
 
 	return {
 		controller,
