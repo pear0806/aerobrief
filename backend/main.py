@@ -1,7 +1,7 @@
-# backend/main.py
 import os
 import httpx
 import asyncio
+from contextlib import asynccontextmanager
 from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -9,12 +9,41 @@ from fastapi.middleware.cors import CORSMiddleware
 from notam_parser import process_notams
 
 load_dotenv()
-AVWX_TOKEN = os.getenv("AVWX_TOKEN").strip().replace('"', '').replace("'", "")
+AVWX_TOKEN = os.getenv("AVWX_TOKEN", "").strip().replace(
+    '"', '').replace("'", "")
+
+vatsim_cache = {
+    "data": None,
+    "is_fetching": False,
+}
+
+
+async def fetch_vatsim_data_loop():
+    url = "https://data.vatsim.net/v3/vatsim-data.json"
+    async with httpx.AsyncClient(timeout=10) as client:
+        while True:
+            try:
+                res = await client.get(url)
+                if res.status_code == 200:
+                    vatsim_cache["data"] = res.json()
+                    print("✅ 成功更新 VATSIM 全域雷達資料")
+            except Exception as e:
+                print(f"❌ 背景抓取 VATSIM 失敗: {str(e)}")
+
+            await asyncio.sleep(15)
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    task = asyncio.create_task(fetch_vatsim_data_loop())
+    yield
+    task.cancel()
 
 app = FastAPI(
     title="AeroBrief API",
     description="AeroBrief Backend",
-    version="1.0.0"
+    version="1.0.0",
+    lifespan=lifespan
 )
 
 app.add_middleware(
@@ -60,12 +89,13 @@ async def get_weather(icao: str):
         "notam": f"https://notams.aim.faa.gov/notamSearch/search"
     }
 
-    async with httpx.AsyncClient() as client:
+    async with httpx.AsyncClient(timeout=10) as client:
         responses = await asyncio.gather(
             client.get(urls["taf"], headers=avwx_headers),
             client.get(urls["metar"], headers=avwx_headers),
             client.get(urls["station"], headers=avwx_headers),
-            client.post(urls["notam"], headers=faa_headers, data=faa_data)
+            client.post(urls["notam"], headers=faa_headers, data=faa_data),
+            return_exceptions=True
         )
 
         taf_res, metar_res, station_res, notam_res = responses
@@ -108,15 +138,11 @@ async def get_weather(icao: str):
 @app.get("/api/vatsim/{icao}")
 async def get_vatsim(icao: str):
     icao = icao.upper()
-    url = "https://data.vatsim.net/v3/vatsim-data.json"
 
-    async with httpx.AsyncClient() as client:
-        try:
-            res = await client.get(url)
-            data = res.json() if res.status_code == 200 else {
-                "error": "can't fecth vatsim data"}
-        except Exception as e:
-            return {"error": f"fetch vatsim data failed : {str(e)}"}
+    data = vatsim_cache["data"]
+
+    if not data:
+        return {"error": "雷達系統啟動中，請等候"}
 
     controllers = []
     for c in data.get("controllers", []):
