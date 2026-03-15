@@ -65,16 +65,6 @@ function App() {
 	}, [favorite]);
 
 	useEffect(() => {
-		if (data && data.station) {
-			const interval = setInterval(() => {
-				fetchWeather();
-				fetchVatsimData();
-			}, 60000);
-			return () => clearInterval(interval);
-		}
-	}, [data]);
-
-	useEffect(() => {
 		localStorage.setItem("crosswind-limit", CrossWindLimit);
 		localStorage.setItem("tailwind-limit", TailWindLimit);
 		localStorage.setItem("headwind-limit", HeadWindLimit);

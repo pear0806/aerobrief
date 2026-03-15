@@ -107,8 +107,12 @@ async def get_weather(icao: str):
         metar_data = metar_res.json() if metar_res.status_code == 200 else None
         station_data = station_res.json() if station_res.status_code == 200 else None
         notam_data = notam_res.json() if notam_res.status_code == 200 else None
-        safe_station = station_data if station_data else {}
-        safe_metar = metar_data if metar_data else {}
+
+        if metar_data == None or station_data == None:
+            if metar_data:
+                return {"error": "failed fetch station data error in backend"}
+            else:
+                return {"error": "failed fetch metar data in backend"}
 
         formatted_runways = []
         for rwy in station_data.get("runways", []) if station_data else []:
@@ -127,7 +131,7 @@ async def get_weather(icao: str):
 
         final_data = {
             "taf": taf_data,
-            "common": {**safe_station, **safe_metar},
+            "common": {**station_data, **metar_data},
             "runways": formatted_runways,
             "notam": process_notams(notam_data)
         }

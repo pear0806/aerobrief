@@ -21,17 +21,18 @@ export const useAvwx = (icaoCode) => {
 			);
 
 			if (!response.ok) {
-				const errData = await response.json().catch(() => ({}));
-				throw new Error(
-					errData.error || `無法獲取資料 (${response.status})`,
-				);
+				throw new Error("failed to fetch AVWX data from backend");
 			}
 
-			const result = await response.json();
-			setData(result);
+			const data = await response.json();
+			if (data.error) {
+				throw new Error(data.error);
+			}
+
+			setData(data);
 		} catch (err) {
+			console.error(err);
 			setError(err.message);
-			console.error("天氣 API 錯誤:", err);
 		} finally {
 			setLoading(false);
 		}

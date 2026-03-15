@@ -6,7 +6,6 @@ export const useVatsim = (icao) => {
 	const [vatsimError, setVatsimError] = useState(null);
 	const [arrivals, setArrivals] = useState([]);
 	const [departures, setDepartures] = useState([]);
-
 	const currentIcaoRef = useRef(icao);
 
 	useEffect(() => {
@@ -16,8 +15,6 @@ export const useVatsim = (icao) => {
 	const fetchVatsimData = async (isBackgroundUpdate = false) => {
 		const targetIcao = currentIcaoRef.current;
 		if (!targetIcao) return;
-
-		currentIcaoRef.current = targetIcao;
 
 		if (!isBackgroundUpdate) {
 			setVatsimLoading(true);
@@ -32,7 +29,8 @@ export const useVatsim = (icao) => {
 				`${API_BASE_URL}/api/vatsim/${targetIcao}`,
 			);
 
-			if (!response.ok) throw new Error("fetch VATSIM data error");
+			if (!response.ok)
+				throw new Error("failed to fetch vatsim data from backend");
 
 			const data = await response.json();
 			if (data.error) {
