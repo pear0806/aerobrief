@@ -73,7 +73,7 @@ async def get_status():
 @app.get("/api/weather/{icao}")
 async def get_weather(icao: str):
     if not AVWX_TOKEN:
-        return {"error": "伺服器遺失 AVWX_TOKEN"}
+        return {"error": "server missing AVWX_TOKEN"}
 
     avwx_headers = {"Authorization": f"{AVWX_TOKEN}",
                     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"}
@@ -101,18 +101,14 @@ async def get_weather(icao: str):
         taf_res, metar_res, station_res, notam_res = responses
 
         if metar_res.status_code != 200:
-            return {"error": f"無法獲取 {icao} 的氣象資料。錯誤碼: {metar_res.status_code}, 原因: {metar_res.text}"}
+            return {"error": f"failed to fetch {icao}'s metar data, code: {metar_res.status_code}, resson: {metar_res.text}"}
+        if station_res.status_code != 200:
+            return {"error": f"failed to fetch {icao}'s station data, code:{station_res.status_code}, reason:{station_res.text}"}
 
         taf_data = taf_res.json() if taf_res.status_code == 200 else None
         metar_data = metar_res.json() if metar_res.status_code == 200 else None
         station_data = station_res.json() if station_res.status_code == 200 else None
         notam_data = notam_res.json() if notam_res.status_code == 200 else None
-
-        if metar_data == None or station_data == None:
-            if metar_data:
-                return {"error": "failed fetch station data error in backend"}
-            else:
-                return {"error": "failed fetch metar data in backend"}
 
         formatted_runways = []
         for rwy in station_data.get("runways", []) if station_data else []:
