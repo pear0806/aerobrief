@@ -101,9 +101,9 @@ async def get_weather(icao: str):
         taf_res, metar_res, station_res, notam_res = responses
 
         if metar_res.status_code != 200:
-            return {"error": f"failed to fetch {icao}'s metar data, code: {metar_res.status_code}, resson: {metar_res.text}"}
+            return {"error": f"failed to fetch {icao} metar data, code: {metar_res.status_code}, resson: {metar_res.text}"}
         if station_res.status_code != 200:
-            return {"error": f"failed to fetch {icao}'s station data, code:{station_res.status_code}, reason:{station_res.text}"}
+            return {"error": f"failed to fetch {icao} station data, code:{station_res.status_code}, reason:{station_res.text}"}
 
         taf_data = taf_res.json() if taf_res.status_code == 200 else None
         metar_data = metar_res.json() if metar_res.status_code == 200 else None
