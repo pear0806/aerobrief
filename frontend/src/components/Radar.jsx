@@ -1,7 +1,12 @@
 import "../assets/styles/Radar.css";
 
 import L from "leaflet";
-import { PlaneLanding, PlaneTakeoff, Radar as RadarIcon } from "lucide-react";
+import {
+	Plane,
+	PlaneLanding,
+	PlaneTakeoff,
+	Radar as RadarIcon,
+} from "lucide-react";
 import { useEffect } from "react";
 import { MapContainer, Marker, Popup, TileLayer, useMap } from "react-leaflet";
 
@@ -21,8 +26,15 @@ const getAirplaneSvg = (color, heading) => `
 	</div>
 `;
 
-const createAirplaneIcon = (heading, isArrival) => {
-	const color = isArrival ? "#60a5fa" : "#fbbf24";
+const createAirplaneIcon = (heading, isArrival, isCruising) => {
+	let color = "#fbbf24";
+	if (isArrival) {
+		color = "60a5fa";
+	}
+	if (isCruising) {
+		color = "#a855f7";
+	}
+
 	return L.divIcon({
 		className: "custom-airplane-icon",
 		html: getAirplaneSvg(color, heading),
@@ -50,8 +62,17 @@ const RadarMap = ({
 
 	const center = [airportLat, airportLon];
 	const allTraffic = [
-		...arrivals.map((p) => ({ ...p, isArrival: true })),
-		...departures.map((p) => ({ ...p, isArrival: false })),
+		...arrivals.map((p) => ({ ...p, isArrival: true, isCruising: false })),
+		...departures.map((p) => ({
+			...p,
+			isArrival: false,
+			isCruising: false,
+		})),
+		...(cruisings || []).map((p) => ({
+			...p,
+			isArrival: false,
+			isCruising: true,
+		})),
 	].filter((p) => p.latitude && p.longitude);
 
 	return (
@@ -89,15 +110,18 @@ const RadarMap = ({
 							icon={createAirplaneIcon(
 								pilot.heading,
 								pilot.isArrival,
+								pilot.isCruising,
 							)}
 						>
 							<Popup className="custom-popup">
 								<div>
 									<strong
 										style={{
-											color: pilot.isArrival
-												? "#60a5fa"
-												: "#fbbf24",
+											color: pilot.isCruising
+												? "a855f7"
+												: pilot.isArrival
+													? "#60a5fa"
+													: "#fbbf24",
 											fontSize: "1.1rem",
 										}}
 									>
@@ -117,11 +141,24 @@ const RadarMap = ({
 											margin: "6px 0",
 										}}
 									/>
+									<div
+										style={{
+											marginBottom: "6px",
+											color: "#e2e8f0",
+											fontWeight: "600",
+										}}
+									>
+										航線: {pilot.departure || "????"} ➔{" "}
+										{pilot.arrival || "????"}
+									</div>
+
 									<div>
 										狀態:{" "}
-										{pilot.isArrival
-											? "🛬 抵達進場中"
-											: "🛫 離場爬升中"}
+										{pilot.isCruising
+											? "✈️ 巡航/過境中"
+											: pilot.isArrival
+												? "🛬 抵達進場中"
+												: "🛫 離場爬升中"}
 									</div>
 									<div>
 										高度:{" "}
@@ -151,23 +188,14 @@ const RadarMap = ({
 			</div>
 
 			<div className="map-legend">
-				<span
-					style={{
-						display: "flex",
-						alignItems: "center",
-						gap: "4px",
-					}}
-				>
+				<span>
 					<PlaneLanding size={18} color="#60a5fa" /> 抵達航班
 				</span>
-				<span
-					style={{
-						display: "flex",
-						alignItems: "center",
-						gap: "4px",
-					}}
-				>
+				<span>
 					<PlaneTakeoff size={18} color="#fbbf24" /> 離場航班
+				</span>
+				<span>
+					<Plane size={18} color="#a855f7" /> 巡航航班
 				</span>
 				<span className="legend-hint">
 					(點擊飛機圖示可查看詳細資訊)

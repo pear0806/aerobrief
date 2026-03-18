@@ -48,7 +48,7 @@
 
 .traffic-grid {
 	display: grid;
-	grid-template-columns: 1fr 1fr;
+	grid-template-columns: 1fr 1fr 1fr;
 	gap: 15px;
 	margin-top: 5px;
 }
@@ -77,8 +77,13 @@
 .arr-title {
 	color: #60a5fa;
 }
+
 .dep-title {
 	color: #fbbf24;
+}
+
+.crs-title {
+	color: #a855f7;
 }
 
 .count-tag {
@@ -133,6 +138,10 @@
 
 .dep-card {
 	border-left-color: #f59e0b;
+}
+
+.crs-card {
+	border-left-color: #a855f7;
 }
 
 .flight-main {

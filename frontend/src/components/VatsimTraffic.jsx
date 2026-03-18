@@ -2,7 +2,7 @@ import "../assets/styles/VatsimTraffic.css";
 
 import { Coffee, Plane, PlaneLanding, PlaneTakeoff, Radar } from "lucide-react";
 
-const VatsimTraffic = ({ arrivals, departures }) => {
+const VatsimTraffic = ({ arrivals, departures, cruisings }) => {
 	const totalFlights = arrivals.length + departures.length;
 
 	if (totalFlights === 0) {
@@ -69,7 +69,6 @@ const VatsimTraffic = ({ arrivals, departures }) => {
 					</div>
 				</div>
 
-				{/* === 離場航班 === */}
 				<div className="traffic-column">
 					<h4 className="column-title dep-title">
 						<PlaneTakeoff size={16} /> 預計起飛
@@ -105,6 +104,46 @@ const VatsimTraffic = ({ arrivals, departures }) => {
 							))
 						) : (
 							<div className="empty-msg">無離場航班</div>
+						)}
+					</div>
+				</div>
+
+				<div className="traffic-column">
+					<h4 className="column-title crs-title">
+						<Plane size={16} /> 巡航/過境
+						<span className="count-tag">{cruisings.length}</span>
+					</h4>
+					<div className="flight-list">
+						{cruisings.length > 0 ? (
+							cruisings.map((pilot) => (
+								<div
+									key={pilot.callsign}
+									className="flight-card crs-card"
+								>
+									<div className="flight-main">
+										<span className="callsign">
+											{pilot.callsign}
+										</span>
+										<span className="aircraft-type">
+											{pilot.aircraft_short}
+										</span>
+									</div>
+									<div className="flight-route">
+										<span className="route-label">RTE</span>{" "}
+										{pilot.departure || "????"} ➔{" "}
+										{pilot.arrival || "????"}
+									</div>
+									<div className="flight-details">
+										<span>
+											<Radar size={12} /> {pilot.altitude}{" "}
+											ft
+										</span>
+										<span>{pilot.groundspeed} kts</span>
+									</div>
+								</div>
+							))
+						) : (
+							<div className="empty-msg">無巡航航班</div>
 						)}
 					</div>
 				</div>

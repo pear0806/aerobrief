@@ -187,7 +187,7 @@ async def get_vatsim(icao: str):
             if pilot_info["arrival"] == icao:
                 arrivals.append(pilot_info)
 
-            if pilot_info["cruising_altitude"] - 1000 <= pilot_info["altitude"] <= pilot_info["cruising_altitude"]+1000:
+            if int(pilot_info["cruising_altitude"]) - 1000 <= int(pilot_info["altitude"]) <= int(pilot_info["cruising_altitude"])+1000:
                 cruisings.append(pilot_info)
 
     final_data = {

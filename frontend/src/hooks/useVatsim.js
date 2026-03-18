@@ -38,10 +38,21 @@ export const useVatsim = (icao) => {
 				throw new Error(data.error);
 			}
 
+			const arrivals = data.arrivals || [];
+			const departures = data.departures || [];
+			const cruisings = data.cruisings || [];
+
+			const arrAndDepCids = new Set([
+				...arrivals.map((p) => p.cid),
+				...departures.map((p) => p.cid),
+			]);
+
+			cruisings.filter((p) => !arrAndDepCids.has(p.cid));
+
 			setController(data.controllers || []);
-			setArrivals(data.arrivals || []);
-			setDepartures(data.departures || []);
-			setCruisings(data.cruisings || []);
+			setArrivals(arrivals);
+			setDepartures(departures);
+			setCruisings(cruisings);
 		} catch (err) {
 			console.error(err);
 			setVatsimError(err.message);
