@@ -38,7 +38,14 @@ const airportIcon = L.divIcon({
 	iconAnchor: [12, 24],
 });
 
-const RadarMap = ({ arrivals, departures, airportLat, airportLon, icao }) => {
+const RadarMap = ({
+	arrivals,
+	departures,
+	cruisings,
+	airportLat,
+	airportLon,
+	icao,
+}) => {
 	if (!airportLat || !airportLon) return null;
 
 	const center = [airportLat, airportLon];
@@ -58,6 +65,8 @@ const RadarMap = ({ arrivals, departures, airportLat, airportLon, icao }) => {
 				<MapContainer
 					center={center}
 					zoom={10}
+					keyboard={false}
+					scrollWheelZoom={false}
 					style={{ height: "100%", width: "100%" }}
 				>
 					<TileLayer

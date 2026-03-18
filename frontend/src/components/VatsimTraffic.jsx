@@ -30,7 +30,6 @@ const VatsimTraffic = ({ arrivals, departures }) => {
 			</h3>
 
 			<div className="traffic-grid">
-				{/* === 抵達航班 === */}
 				<div className="traffic-column">
 					<h4 className="column-title arr-title">
 						<PlaneLanding size={16} /> 預計抵達

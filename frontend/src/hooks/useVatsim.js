@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 
 export const useVatsim = (icao) => {
-	const [controller, setController] = useState([]);
+	const [controller, setController] = useState();
 	const [vatsimLoading, setVatsimLoading] = useState(false);
 	const [vatsimError, setVatsimError] = useState(null);
-	const [arrivals, setArrivals] = useState([]);
-	const [departures, setDepartures] = useState([]);
+	const [arrivals, setArrivals] = useState();
+	const [departures, setDepartures] = useState();
+	const [cruisings, setCruisings] = useState();
 	const currentIcaoRef = useRef(icao);
 
 	useEffect(() => {
@@ -40,12 +41,14 @@ export const useVatsim = (icao) => {
 			setController(data.controllers || []);
 			setArrivals(data.arrivals || []);
 			setDepartures(data.departures || []);
+			setCruisings(data.cruisings || []);
 		} catch (err) {
 			console.error(err);
 			setVatsimError(err.message);
 			setController([]);
 			setArrivals([]);
 			setDepartures([]);
+			setCruisings([]);
 		} finally {
 			if (!isBackgroundUpdate) {
 				setVatsimLoading(false);
@@ -67,6 +70,7 @@ export const useVatsim = (icao) => {
 		controller,
 		arrivals,
 		departures,
+		cruisings,
 		vatsimLoading,
 		vatsimError,
 		fetchVatsimData,

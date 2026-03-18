@@ -49,6 +49,7 @@ function App() {
 		controller,
 		arrivals,
 		departures,
+		cruisings,
 		vatsimLoading,
 		vatsimError,
 		fetchVatsimData,
@@ -223,6 +224,7 @@ function App() {
 								<Radar
 									arrivals={arrivals}
 									departures={departures}
+									cruisings={cruisings}
 									airportLat={data?.common?.latitude}
 									airportLon={data?.common?.longitude}
 									icao={icao}
