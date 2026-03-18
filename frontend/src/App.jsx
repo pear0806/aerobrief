@@ -235,6 +235,7 @@ function App() {
 								<VatsimTraffic
 									arrivals={arrivals}
 									departures={departures}
+									cruisings={cruisings}
 								/>
 							</FadeIn>
 						</div>
