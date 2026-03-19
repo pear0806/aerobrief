@@ -174,7 +174,7 @@ async def get_vatsim(icao: str):
                 "departure": fp.get("departure"),
                 "arrival": fp.get("arrival"),
                 "altitude": p.get("altitude"),
-                "cruising_altitude": fp.get("cruising_altitude"),
+                "cruising_altitude": fp.get("altitude"),
                 "groundspeed": p.get("groundspeed"),
                 "latitude": p.get("latitude"),
                 "longitude": p.get("longitude"),
@@ -187,14 +187,15 @@ async def get_vatsim(icao: str):
             if pilot_info["arrival"] == icao:
                 arrivals.append(pilot_info)
 
-            if int(pilot_info["cruising_altitude"]) - 1000 <= int(pilot_info["altitude"]) <= int(pilot_info["cruising_altitude"])+1000:
-                cruisings.append(pilot_info)
+            if (pilot_info["cruising_altitude"] - 1000 <= pilot_info["altitude"] <= pilot_info["cruising_altitude"] + 1000):
+                if pilot_info in departures or pilot_info in arrivals:
+                    cruisings.append(pilot_info)
 
     final_data = {
         "controllers": controllers,
         "departures": departures,
         "arrivals": arrivals,
-        cruisings: cruisings
+        "cruisings": cruisings
     }
 
     return final_data

@@ -1,12 +1,13 @@
 import { useEffect, useRef, useState } from "react";
 
 export const useVatsim = (icao) => {
-	const [controller, setController] = useState();
+	const [controller, setController] = useState([]);
 	const [vatsimLoading, setVatsimLoading] = useState(false);
 	const [vatsimError, setVatsimError] = useState(null);
-	const [arrivals, setArrivals] = useState();
-	const [departures, setDepartures] = useState();
-	const [cruisings, setCruisings] = useState();
+	const [arrivals, setArrivals] = useState([]);
+	const [departures, setDepartures] = useState([]);
+	const [cruisings, setCruisings] = useState([]);
+
 	const currentIcaoRef = useRef(icao);
 
 	useEffect(() => {
@@ -43,16 +44,18 @@ export const useVatsim = (icao) => {
 			const cruisings = data.cruisings || [];
 
 			const arrAndDepCids = new Set([
-				...arrivals.map((p) => p.cid),
-				...departures.map((p) => p.cid),
+				...arrivals.map((pilot) => pilot.cid),
+				...departures.map((pilot) => pilot.cid),
 			]);
 
-			cruisings.filter((p) => !arrAndDepCids.has(p.cid));
+			const processedCruisings = cruisings.filter(
+				(pilot) => !arrAndDepCids.has(pilot.cid),
+			);
 
 			setController(data.controllers || []);
 			setArrivals(arrivals);
 			setDepartures(departures);
-			setCruisings(cruisings);
+			setCruisings(processedCruisings);
 		} catch (err) {
 			console.error(err);
 			setVatsimError(err.message);
@@ -64,6 +67,8 @@ export const useVatsim = (icao) => {
 			if (!isBackgroundUpdate) {
 				setVatsimLoading(false);
 			}
+
+			console.log("cruisings", cruisings);
 		}
 	};
 
@@ -71,7 +76,7 @@ export const useVatsim = (icao) => {
 		if (!currentIcaoRef.current) return;
 
 		const intervalId = setInterval(() => {
-			fetchVatsimData(currentIcaoRef.current, true);
+			fetchVatsimData(true);
 		}, 15000);
 
 		return () => clearInterval(intervalId);
