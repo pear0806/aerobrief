@@ -155,7 +155,7 @@ const RadarMap = ({
 									<div>
 										狀態:{" "}
 										{pilot.isCruising
-											? "✈️ 巡航/過境中"
+											? "✈️ 巡航中"
 											: pilot.isArrival
 												? "🛬 抵達進場中"
 												: "🛫 離場爬升中"}

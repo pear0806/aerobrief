@@ -93,3 +93,17 @@
 .red-dot {
 	background: #ef4444;
 }
+
+@media (max-width: 768px) {
+	.runway-map-wrapper {
+		padding: 15px 10px;
+	}
+	.map-title {
+		font-size: 0.85rem;
+	}
+	.map-legend {
+		flex-direction: column;
+		gap: 8px;
+		align-items: center;
+	}
+}

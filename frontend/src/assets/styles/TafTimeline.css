@@ -112,3 +112,30 @@
 .raw-info {
 	margin-top: 15px;
 }
+
+@media (max-width: 768px) {
+	.taf-section {
+		padding: 12px;
+	}
+	.timeline-time {
+		width: 65px;
+		padding-right: 10px;
+	}
+	.time-text {
+		font-size: 0.8rem;
+	}
+	.time-type {
+		font-size: 0.75rem;
+	}
+	.timeline-content {
+		padding-left: 10px;
+	}
+	.forecast-detail {
+		font-size: 0.85rem;
+		align-items: flex-start;
+	}
+	.raw-info {
+		font-size: 0.8rem;
+		padding: 8px;
+	}
+}

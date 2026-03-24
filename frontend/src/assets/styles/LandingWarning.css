@@ -77,3 +77,19 @@
 		transform: translateY(0);
 	}
 }
+
+@media (max-width: 768px) {
+	.minima-warning-container {
+		flex-direction: column;
+		gap: 12px;
+		padding: 12px;
+	}
+	.warning-icon {
+		margin-top: 0;
+	}
+	.warning-details {
+		flex-direction: column;
+		gap: 6px;
+		width: 100%;
+	}
+}
