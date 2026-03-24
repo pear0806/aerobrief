@@ -43,19 +43,20 @@ export const useVatsim = (icao) => {
 			const departures = data.departures || [];
 			const cruisings = data.cruisings || [];
 
-			const arrAndDepCids = new Set([
-				...arrivals.map((pilot) => pilot.cid),
-				...departures.map((pilot) => pilot.cid),
-			]);
+			const cruisingCids = new Set([...cruisings.map((p) => p.cid)]);
 
-			const processedCruisings = cruisings.filter(
-				(pilot) => !arrAndDepCids.has(pilot.cid),
+			const processedDepartures = departures.filter(
+				(p) => !cruisingCids.has(p.cid),
+			);
+
+			const processedArrivals = arrivals.filter(
+				(p) => !cruisingCids.has(p.cid),
 			);
 
 			setController(data.controllers || []);
-			setArrivals(arrivals);
-			setDepartures(departures);
-			setCruisings(processedCruisings);
+			setArrivals(processedArrivals);
+			setDepartures(processedDepartures);
+			setCruisings(cruisings);
 		} catch (err) {
 			console.error(err);
 			setVatsimError(err.message);

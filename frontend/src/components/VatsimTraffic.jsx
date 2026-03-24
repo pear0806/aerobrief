@@ -3,7 +3,7 @@ import "../assets/styles/VatsimTraffic.css";
 import { Coffee, Plane, PlaneLanding, PlaneTakeoff, Radar } from "lucide-react";
 
 const VatsimTraffic = ({ arrivals, departures, cruisings }) => {
-	const totalFlights = arrivals.length + departures.length;
+	const totalFlights = arrivals.length + departures.length + cruisings.length;
 
 	if (totalFlights === 0) {
 		return (
