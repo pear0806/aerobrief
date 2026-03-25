@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 
-import { calculateCrosswind } from "../utils/caclRWYwind";
+import { calculateCrosswind } from "../utils/calcRWYwind.js";
 
 export const useRunwayAnalysis = (data, limits) => {
 	const { CrossWindLimit, TailWindLimit, HeadWindLimit } = limits;
