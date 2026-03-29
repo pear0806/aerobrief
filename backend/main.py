@@ -48,7 +48,8 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["http://localhost:3000",
+                   "https://aerobrief.vercel.app"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -100,7 +101,7 @@ async def get_weather(icao: str):
 
         taf_res, metar_res, station_res, notam_res = responses
 
-        if metar_res.status_code != 200:
+        if isinstance(metar_res, Exception) and metar_res.status_code != 200:
             return {"error": f"failed to fetch {icao} metar data, code: {metar_res.status_code}, resson: {metar_res.text}"}
         if station_res.status_code != 200:
             return {"error": f"failed to fetch {icao} station data, code:{station_res.status_code}, reason:{station_res.text}"}
@@ -154,7 +155,7 @@ async def get_vatsim(icao: str):
                 "name": c.get("name")
             })
 
-    order = ["DLE", "GND", "TWR", "DEP", "APP", "CTR"]
+    order = ["DEL", "GND", "TWR", "DEP", "APP", "CTR"]
     order_map = {suffix: index for index, suffix in enumerate(order)}
     controllers.sort(key=lambda x: order_map.get(
         x["callsign"].upper().split("_")[-1], 99))
