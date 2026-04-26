@@ -7,14 +7,18 @@ import {
 	PlaneTakeoff,
 	Radar as RadarIcon,
 } from "lucide-react";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { MapContainer, Marker, Popup, TileLayer, useMap } from "react-leaflet";
 
-const MapUpdater = ({ center }) => {
+const MapUpdater = ({ center, icao }) => {
 	const map = useMap();
+	const prevIcaoRef = useRef(null);
 	useEffect(() => {
-		if (center) map.setView(center, 10);
-	}, [center, map]);
+		if (center && icao !== prevIcaoRef.current) {
+			map.setView(center, 10);
+			prevIcaoRef.current = icao;
+		}
+	}, [center, icao, map]);
 	return null;
 };
 
@@ -94,7 +98,7 @@ const RadarMap = ({
 						url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
 						attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
 					/>
-					<MapUpdater center={center} />
+					<MapUpdater center={center} icao={icao} />
 					<Marker position={center} icon={airportIcon}>
 						<Popup className="custom-popup">
 							<strong style={{ color: "#ef4444" }}>{icao}</strong>

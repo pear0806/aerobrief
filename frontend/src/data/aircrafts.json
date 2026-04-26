@@ -1,0 +1,80 @@
+{
+	"CUSTOM": {
+		"name": "⚙️ 自訂限制 (手動輸入)",
+		"cross": 15,
+		"tail": 10,
+		"head": 20
+	},
+	"B738": {
+		"name": "Boeing 737-800",
+		"cross": 33,
+		"tail": 15,
+		"head": 50
+	},
+	"B77W": {
+		"name": "Boeing 777-300ER",
+		"cross": 38,
+		"tail": 15,
+		"head": 50
+	},
+	"B788": {
+		"name": "Boeing 787-8",
+		"cross": 33,
+		"tail": 15,
+		"head": 50
+	},
+	"B789": {
+		"name": "Boeing 787-9",
+		"cross": 33,
+		"tail": 15,
+		"head": 50
+	},
+	"B78X": {
+		"name": "Boeing 787-10",
+		"cross": 33,
+		"tail": 15,
+		"head": 50
+	},
+	"A320": {
+		"name": "Airbus A320ceo",
+		"cross": 38,
+		"tail": 15,
+		"head": 50
+	},
+	"A20N": {
+		"name": "Airbus A320neo",
+		"cross": 38,
+		"tail": 15,
+		"head": 50
+	},
+	"A321": {
+		"name": "Airbus A321ceo",
+		"cross": 38,
+		"tail": 15,
+		"head": 50
+	},
+	"A21N": {
+		"name": "Airbus A321neo",
+		"cross": 38,
+		"tail": 15,
+		"head": 50
+	},
+	"A339": {
+		"name": "Airbus A330-900neo",
+		"cross": 32,
+		"tail": 15,
+		"head": 50
+	},
+	"A359": {
+		"name": "Airbus A350-900",
+		"cross": 40,
+		"tail": 15,
+		"head": 50
+	},
+	"A35K": {
+		"name": "Airbus A350-1000",
+		"cross": 40,
+		"tail": 15,
+		"head": 50
+	}
+}

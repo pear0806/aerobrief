@@ -19,6 +19,10 @@ export const useVatsim = (icao) => {
 		if (!targetIcao) return;
 
 		if (!isBackgroundUpdate) {
+			setController([]);
+			setArrivals([]);
+			setDepartures([]);
+			setCruisings([]);
 			setVatsimLoading(true);
 		}
 
@@ -74,12 +78,10 @@ export const useVatsim = (icao) => {
 	};
 
 	useEffect(() => {
-		if (!currentIcaoRef.current) return;
-
+		fetchVatsimData(icao, false);
 		const intervalId = setInterval(() => {
-			fetchVatsimData(true);
+			fetchVatsimData(icao, true);
 		}, 15000);
-
 		return () => clearInterval(intervalId);
 	}, [icao]);
 

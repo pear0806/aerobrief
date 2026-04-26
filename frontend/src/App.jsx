@@ -1,13 +1,17 @@
 import "./assets/styles/App.css";
 
+import { Magnet } from "lucide-react";
 import { useEffect, useState } from "react";
 
+import AI from "./components/AI";
 import AircraftSelector from "./components/AircraftSelector";
 import FadeIn from "./components/FadeIn";
+import FlightChart from "./components/FlightChart";
 import LandingWarning from "./components/LandingWarning";
 import LimitControl from "./components/LimitControl";
 import NotamBoard from "./components/NotamDashboard";
 import Radar from "./components/Radar";
+import RandomRoute from "./components/RandomRoute";
 import RunwayCard from "./components/RunwayCard";
 import RunwayMap from "./components/RunwayMap";
 import SearchBar from "./components/SearchBar";
@@ -29,6 +33,8 @@ function App() {
 		const saved = localStorage.getItem("favorite");
 		return saved ? JSON.parse(saved) : [];
 	});
+
+	const [history, setHistory] = useState([]);
 
 	const [CrossWindLimit, setCrossWindLimit] = useState(
 		Number(localStorage.getItem("crosswind-limit")) || 15,
@@ -62,6 +68,25 @@ function App() {
 	}, [icao]);
 
 	useEffect(() => {
+		if (arrivals.length > 0 || departures.length > 0) {
+			const now = new Date().toLocaleTimeString([], {
+				hour: "2-digit",
+				minute: "2-digit",
+				second: "2-digit",
+			});
+
+			setHistory((prev) => {
+				const newEntry = {
+					time: now,
+					arrCount: arrivals.length,
+					depCount: departures.length,
+				};
+				return [...prev, newEntry].slice(-20);
+			});
+		}
+	}, [arrivals, departures]);
+
+	useEffect(() => {
 		localStorage.setItem("favorite", JSON.stringify(favorite));
 	}, [favorite]);
 
@@ -89,7 +114,7 @@ function App() {
 		}
 	};
 
-	const handleOnSearch = (targetIcao) => {
+	const handleOnSearch = async (targetIcao) => {
 		const searchTarget = typeof targetIcao === "string" ? targetIcao : icao;
 		fetchWeather(searchTarget);
 		fetchVatsimData(searchTarget);
@@ -113,6 +138,12 @@ function App() {
 					favorite={favorite}
 					toggleFavorite={toggleFavorite}
 				/>
+				<FadeIn delay={0.05}>
+					<RandomRoute
+						setIcao={setIcao}
+						handleOnSearch={handleOnSearch}
+					/>
+				</FadeIn>
 			</div>
 
 			{error && <div className="error-message">⚠️ {error}</div>}
@@ -141,6 +172,15 @@ function App() {
 							<FadeIn delay={0.3}>
 								<NotamBoard notams={data.notam} />
 							</FadeIn>
+
+							<FadeIn delay={0.36}>
+								<AI icao={icao}></AI>
+							</FadeIn>
+
+							<FlightChart
+								history={history}
+								icao={icao}
+							></FlightChart>
 						</div>
 
 						<div className="right-column">

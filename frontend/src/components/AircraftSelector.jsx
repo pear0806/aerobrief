@@ -1,6 +1,6 @@
 import "../assets/styles/AircraftSelector.css";
 
-import { aircraftDatabase } from "../data/aircrafts";
+import aircraftDatabase from "../data/aircrafts.json";
 
 const AircraftSelector = ({
 	aircraft,

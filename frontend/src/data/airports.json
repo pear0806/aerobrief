@@ -1,0 +1,148 @@
+{
+	"airports": [
+		{
+			"icao": "RCTP",
+			"name": "臺灣桃園國際機場",
+			"city": "台北/桃園",
+			"country": "台灣"
+		},
+		{
+			"icao": "RCKH",
+			"name": "高雄國際機場",
+			"city": "高雄",
+			"country": "台灣"
+		},
+		{
+			"icao": "RCSS",
+			"name": "台北松山機場",
+			"city": "台北",
+			"country": "台灣"
+		},
+		{
+			"icao": "VHHH",
+			"name": "香港國際機場",
+			"city": "香港",
+			"country": "中國"
+		},
+		{
+			"icao": "ZSPD",
+			"name": "上海浦東國際機場",
+			"city": "上海",
+			"country": "中國"
+		},
+		{
+			"icao": "ZBAA",
+			"name": "北京首都國際機場",
+			"city": "北京",
+			"country": "中國"
+		},
+		{
+			"icao": "ZGGG",
+			"name": "廣州白雲國際機場",
+			"city": "廣州",
+			"country": "中國"
+		},
+		{
+			"icao": "RJAA",
+			"name": "成田國際機場",
+			"city": "東京",
+			"country": "日本"
+		},
+		{
+			"icao": "RJTT",
+			"name": "羽田國際機場",
+			"city": "東京",
+			"country": "日本"
+		},
+		{
+			"icao": "ROAH",
+			"name": "那霸機場",
+			"city": "沖繩",
+			"country": "日本"
+		},
+		{
+			"icao": "RKSI",
+			"name": "仁川國際機場",
+			"city": "首爾",
+			"country": "韓國"
+		},
+		{
+			"icao": "WSSS",
+			"name": "樟宜國際機場",
+			"city": "新加坡",
+			"country": "新加坡"
+		},
+		{
+			"icao": "EDDF",
+			"name": "法蘭克福機場",
+			"city": "法蘭克福",
+			"country": "德國"
+		},
+		{
+			"icao": "EDDM",
+			"name": "慕尼黑機場",
+			"city": "慕尼黑",
+			"country": "德國"
+		},
+		{
+			"icao": "EGLL",
+			"name": "倫敦希斯洛機場",
+			"city": "倫敦",
+			"country": "英國"
+		},
+		{
+			"icao": "LFPG",
+			"name": "巴黎戴高樂機場",
+			"city": "巴黎",
+			"country": "法國"
+		},
+		{
+			"icao": "EHAM",
+			"name": "阿姆斯特丹史基浦機場",
+			"city": "阿姆斯特丹",
+			"country": "荷蘭"
+		},
+		{
+			"icao": "LOWW",
+			"name": "維也納國際機場",
+			"city": "維也納",
+			"country": "奧地利"
+		},
+		{
+			"icao": "KLAX",
+			"name": "洛杉磯國際機場",
+			"city": "洛杉磯",
+			"country": "美國"
+		},
+		{
+			"icao": "KJFK",
+			"name": "甘迺迪國際機場",
+			"city": "紐約",
+			"country": "美國"
+		},
+		{
+			"icao": "KSFO",
+			"name": "舊金山國際機場",
+			"city": "舊金山",
+			"country": "美國"
+		},
+		{
+			"icao": "KLAS",
+			"name": "麥卡倫國際機場",
+			"city": "拉斯維加斯",
+			"country": "美國"
+		},
+		{
+			"icao": "OMDB",
+			"name": "杜拜國際機場",
+			"city": "杜拜",
+			"country": "阿聯"
+		},
+		{
+			"icao": "YSSY",
+			"city": "雪梨",
+			"name": "金斯福德·史密斯機場",
+			"country": "澳洲"
+		}
+	]
+}
