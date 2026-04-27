@@ -90,6 +90,7 @@ function App() {
 
 	const handleOnSearch = (targetIcao) => {
 		const searchTarget = typeof targetIcao === "string" ? targetIcao : icao;
+		setIcao(searchTarget);
 		fetchWeather(searchTarget);
 	};
 
