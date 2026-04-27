@@ -114,17 +114,18 @@ async def get_weather(icao: str):
         formatted_runways = []
         for rwy in station_data.get("runways", []) if station_data else []:
             if rwy.get("ident1"):
+                bearing1 = rwy.get("bearing1") or 0
                 formatted_runways.append({
                     "name": rwy.get("ident1"),
-                    "heading": round(rwy.get("bearing1", 0)),
+                    "heading": round(bearing1),
                     "isFirst": False
                 })
             if rwy.get("ident2"):
+                bearing2 = rwy.get("bearing2") or 0
                 formatted_runways.append({
                     "name": rwy.get("ident2"),
-                    "heading": round(rwy.get("bearing2", 0)),
-                    "isFirst": False
-                })
+                    "heading": round(bearing2),
+                    "isFirst": False})
 
         final_data = {
             "taf": taf_data,
