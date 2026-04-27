@@ -260,7 +260,7 @@ def ask_pilot():
 
     except Exception as e:
         print("❌ LLM Error:", str(e))
-        return jsonify({"error": f"AI 簽派員目前無法連線，錯誤: {str(e)}"}), 500
+        return jsonify({"error": f"AI 簽派員目前無法連線"}), 500
 
 
 if __name__ == "__main__":

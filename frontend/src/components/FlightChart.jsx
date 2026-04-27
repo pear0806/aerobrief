@@ -1,7 +1,9 @@
 import "../assets/styles/FlightChart.css";
 
 import React from "react";
-import Plot from "react-plotly.js";
+import ReactPlotly from "react-plotly.js";
+
+const Plot = ReactPlotly.default || ReactPlotly;
 
 const FlightChart = ({ history = [], icao }) => {
 	const times = history.map((h) => h.time);

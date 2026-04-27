@@ -58,7 +58,6 @@ function App() {
 		cruisings,
 		vatsimLoading,
 		vatsimError,
-		fetchVatsimData,
 	} = useVatsim(icao);
 
 	const [aircraft, setAircraft] = useState("B77W");
@@ -117,7 +116,6 @@ function App() {
 	const handleOnSearch = async (targetIcao) => {
 		const searchTarget = typeof targetIcao === "string" ? targetIcao : icao;
 		fetchWeather(searchTarget);
-		fetchVatsimData(searchTarget);
 	};
 
 	const { processedRunways, windDir } = useRunwayAnalysis(data, {
