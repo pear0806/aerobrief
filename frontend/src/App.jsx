@@ -16,54 +16,38 @@ import TafTimeline from "./components/TafTimeline";
 import VatsimStatus from "./components/VatsimStatus";
 import VatsimTraffic from "./components/VatsimTraffic";
 import WeatherDashboard from "./components/WeatherDashboard";
-import { useAvwx } from "./hooks/useAvwx";
+import { useGateway } from "./hooks/useGateway";
 import { useRunwayAnalysis } from "./hooks/useRunwayAnalysis";
-import { useVatsim } from "./hooks/useVatsim";
 
 function App() {
 	const [icao, setIcao] = useState(
 		localStorage.getItem("last-icao") || "RCTP",
 	);
-
 	const [favorite, setFavorite] = useState(() => {
 		const saved = localStorage.getItem("favorite");
 		return saved ? JSON.parse(saved) : [];
 	});
-
 	const [CrossWindLimit, setCrossWindLimit] = useState(
 		Number(localStorage.getItem("crosswind-limit")) || 15,
 	);
 	const [TailWindLimit, setTailWindLimit] = useState(
 		Number(localStorage.getItem("tailwind-limit")) || 10,
 	);
-
 	const [HeadWindLimit, setHeadWindLimit] = useState(
 		Number(localStorage.getItem("headwind-limit")) || 20,
 	);
-
 	const [pressureUnit, setPressureUnit] = useState("hPa");
-
-	const { data, loading, error, fetchWeather } = useAvwx(icao);
-
-	const {
-		controller,
-		arrivals,
-		departures,
-		cruisings,
-		vatsimLoading,
-		vatsimError,
-	} = useVatsim(icao);
-
 	const [aircraft, setAircraft] = useState("B77W");
+
+	const { callGateway, loading, error } = useGateway();
+	const [briefing, setBriefing] = useState(null);
 
 	useEffect(() => {
 		localStorage.setItem("last-icao", icao);
 	}, [icao]);
-
 	useEffect(() => {
 		localStorage.setItem("favorite", JSON.stringify(favorite));
 	}, [favorite]);
-
 	useEffect(() => {
 		localStorage.setItem("crosswind-limit", CrossWindLimit);
 		localStorage.setItem("tailwind-limit", TailWindLimit);
@@ -71,30 +55,55 @@ function App() {
 	}, [CrossWindLimit, TailWindLimit, HeadWindLimit]);
 
 	const toggleFavorite = (target) => {
-		if (!target) {
-			return;
+		if (!target) return;
+		if (favorite.includes(target)) {
+			setFavorite(favorite.filter((id) => id !== target));
 		} else {
-			if (favorite.includes(target)) {
-				setFavorite(favorite.filter((id) => id !== target));
-				return;
-			} else {
-				if (favorite.length >= 8) {
-					alert("收藏清單已滿 (最多 8 個)");
-					return;
-				} else {
-					setFavorite([...favorite, target]);
-				}
-			}
+			if (favorite.length >= 8) return alert("收藏清單已滿 (最多 8 個)");
+			setFavorite([...favorite, target]);
 		}
 	};
 
-	const handleOnSearch = (targetIcao) => {
-		const searchTarget = typeof targetIcao === "string" ? targetIcao : icao;
-		setIcao(searchTarget);
-		fetchWeather(searchTarget);
+	const handleOnSearch = async (targetIcao) => {
+		const searchIcao = typeof targetIcao === "string" ? targetIcao : icao;
+
+		const result = await callGateway("GET_FULL_BRIEFING", {
+			icao: searchIcao,
+		});
+		if (result) {
+			setBriefing(result);
+		}
 	};
 
-	const { processedRunways, windDir } = useRunwayAnalysis(data, {
+	useEffect(() => {
+		if (!briefing?.icao) return;
+		const interval = setInterval(async () => {
+			const result = await callGateway(
+				"GET_FULL_BRIEFING",
+				{ icao: briefing.icao },
+				true,
+			);
+			if (result) setBriefing(result);
+		}, 15000);
+		return () => clearInterval(interval);
+	}, [briefing?.icao, callGateway]);
+
+	const legacyData = briefing
+		? {
+				common: briefing.weather,
+				taf: briefing.taf,
+				notam: briefing.notams,
+				runways: briefing.runways,
+			}
+		: null;
+
+	const vatsim = briefing?.vatsim || {};
+	const controller = vatsim.controllers || [];
+	const arrivals = vatsim.arrivals || [];
+	const departures = vatsim.departures || [];
+	const cruisings = vatsim.cruisings || [];
+
+	const { processedRunways, windDir } = useRunwayAnalysis(legacyData, {
 		CrossWindLimit,
 		TailWindLimit,
 		HeadWindLimit,
@@ -108,37 +117,38 @@ function App() {
 					icao={icao}
 					setIcao={setIcao}
 					onSearch={handleOnSearch}
-					loading={loading || vatsimLoading}
+					loading={loading}
 					favorite={favorite}
 					toggleFavorite={toggleFavorite}
 				/>
 			</div>
 
 			{error && <div className="error-message">⚠️ {error}</div>}
-			{vatsimError && (
-				<div className="error-message">⚠️ {vatsimError}</div>
+			{vatsim.error && (
+				<div className="error-message">⚠️ {vatsim.error}</div>
 			)}
 
 			{loading ? (
 				<Skeleton />
 			) : (
-				data && (
+				briefing &&
+				legacyData && (
 					<div className="dashboard-layout">
 						<div className="left-column">
 							<FadeIn delay={0.1}>
 								<WeatherDashboard
-									data={data}
+									data={legacyData}
 									pressureUnit={pressureUnit}
 									setPressureUnit={setPressureUnit}
 								/>
 							</FadeIn>
 
 							<FadeIn delay={0.2}>
-								<TafTimeline tafData={data.taf} />
+								<TafTimeline tafData={briefing.taf} />
 							</FadeIn>
 
 							<FadeIn delay={0.3}>
-								<NotamBoard notams={data.notam} />
+								<NotamBoard notams={briefing.notams} />
 							</FadeIn>
 						</div>
 
@@ -146,7 +156,7 @@ function App() {
 							<FadeIn delay={0.15}>
 								<VatsimStatus
 									controller={controller}
-									loading={vatsimLoading}
+									loading={false}
 								/>
 							</FadeIn>
 
@@ -155,8 +165,8 @@ function App() {
 									arrivals={arrivals}
 									departures={departures}
 									cruisings={cruisings}
-									airportLat={data?.common?.latitude}
-									airportLon={data?.common?.longitude}
+									airportLat={briefing.weather?.latitude}
+									airportLon={briefing.weather?.longitude}
 									icao={icao}
 								/>
 							</FadeIn>
@@ -207,7 +217,7 @@ function App() {
 									/>
 								</div>
 
-								<LandingWarning data={data} />
+								<LandingWarning data={legacyData} />
 
 								<h3 className="section-title">跑道分析</h3>
 								<div

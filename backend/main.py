@@ -5,6 +5,8 @@ from contextlib import asynccontextmanager
 from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
+from typing import Dict, Any
 
 from notam_parser import process_notams
 
@@ -54,6 +56,57 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+class GatewayRequest(BaseModel):
+    action: str
+    payload: Dict[str, Any]
+
+
+@app.post("/api/gateway")
+async def api_gateway(req: GatewayRequest):
+    try:
+        if req.action == "GET_FULL_BRIEFING":
+            icao = req.payload.get("icao", "").upper()
+            if not icao:
+                return {"success": False, "error": {"message": "缺少 ICAO 代碼"}}
+
+            tasks = {
+                "weather_and_notam": get_weather(icao),
+                "vatsim": get_vatsim(icao)
+            }
+
+            results = await asyncio.gather(*tasks.values(), return_exceptions=True)
+            briefing_data = dict(zip(tasks.keys(), results))
+
+            weather_res = briefing_data["weather_and_notam"]
+            vatsim_res = briefing_data["vatsim"]
+
+            if isinstance(weather_res, Exception):
+                return {"success": False, "error": {"message": f"天氣資料擷取錯誤: {str(weather_res)}"}}
+            if isinstance(weather_res, dict) and "error" in weather_res:
+                return {"success": False, "error": {"message": weather_res["error"]}}
+            if isinstance(vatsim_res, Exception):
+                vatsim_res = {"error": "VATSIM 資料擷取失敗"}
+
+            return {
+                "success": True,
+                "data": {
+                    "icao": icao,
+
+                    "weather": weather_res.get("common"),
+                    "taf": weather_res.get("taf"),
+                    "runways": weather_res.get("runways"),
+                    "notams": weather_res.get("notam"),
+                    "vatsim": vatsim_res
+                },
+                "error": None
+            }
+
+        return {"success": False, "error": {"message": f"未知的操作: {req.action}"}}
+
+    except Exception as e:
+        return {"success": False, "error": {"message": str(e)}}
 
 
 @app.get("/")
