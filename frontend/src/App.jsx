@@ -1,8 +1,9 @@
 import "./assets/styles/App.css";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import AircraftSelector from "./components/AircraftSelector";
+import ErrorBoundary from "./components/ErrorBoundary";
 import FadeIn from "./components/FadeIn";
 import LandingWarning from "./components/LandingWarning";
 import LimitControl from "./components/LimitControl";
@@ -20,12 +21,14 @@ import { useGateway } from "./hooks/useGateway";
 import { useRunwayAnalysis } from "./hooks/useRunwayAnalysis";
 
 function App() {
-	const [icao, setIcao] = useState(
-		localStorage.getItem("last-icao") || "RCTP",
-	);
+	const [icao, setIcao] = useState(localStorage.getItem("last-icao") || "RCTP");
 	const [favorite, setFavorite] = useState(() => {
-		const saved = localStorage.getItem("favorite");
-		return saved ? JSON.parse(saved) : [];
+		try {
+			const saved = JSON.parse(localStorage.getItem("favorite"));
+			return Array.isArray(saved) ? saved : [];
+		} catch {
+			return [];
+		}
 	});
 	const [CrossWindLimit, setCrossWindLimit] = useState(
 		Number(localStorage.getItem("crosswind-limit")) || 15,
@@ -41,6 +44,9 @@ function App() {
 
 	const { callGateway, loading, error } = useGateway();
 	const [briefing, setBriefing] = useState(null);
+	const [inputError, setInputError] = useState(null);
+	// 目前「使用者想看的」機場；任何晚到的舊回應都不得覆蓋它
+	const activeIcaoRef = useRef(null);
 
 	useEffect(() => {
 		localStorage.setItem("last-icao", icao);
@@ -65,37 +71,70 @@ function App() {
 	};
 
 	const handleOnSearch = async (targetIcao) => {
-		const searchIcao = typeof targetIcao === "string" ? targetIcao : icao;
+		const searchIcao = (typeof targetIcao === "string" ? targetIcao : icao)
+			.trim()
+			.toUpperCase();
+
+		if (!/^[A-Z0-9]{4}$/.test(searchIcao)) {
+			setInputError("請輸入 4 碼 ICAO 機場代碼（例如 RCTP）");
+			return;
+		}
+		setInputError(null);
+		activeIcaoRef.current = searchIcao;
 
 		const result = await callGateway("GET_FULL_BRIEFING", {
 			icao: searchIcao,
 		});
-		if (result) {
+		if (result && activeIcaoRef.current === searchIcao) {
 			setBriefing(result);
 		}
 	};
 
+	// 輪詢：VATSIM（輕量，15 秒）與完整簡報（天氣，5 分鐘；後端另有快取）分開
 	useEffect(() => {
-		if (!briefing?.icao) return;
-		const interval = setInterval(async () => {
+		const target = briefing?.icao;
+		if (!target) return;
+
+		const isCurrent = () => activeIcaoRef.current === target;
+
+		const vatsimTimer = setInterval(async () => {
+			if (document.hidden) return;
+			const vatsim = await callGateway("GET_VATSIM", { icao: target }, true);
+			if (vatsim && isCurrent()) {
+				setBriefing((prev) =>
+					prev && prev.icao === target ? { ...prev, vatsim } : prev,
+				);
+			}
+		}, 15000);
+
+		const weatherTimer = setInterval(async () => {
+			if (document.hidden) return;
 			const result = await callGateway(
 				"GET_FULL_BRIEFING",
-				{ icao: briefing.icao },
+				{ icao: target },
 				true,
 			);
-			if (result) setBriefing(result);
-		}, 15000);
-		return () => clearInterval(interval);
+			if (result && isCurrent()) setBriefing(result);
+		}, 300000);
+
+		return () => {
+			clearInterval(vatsimTimer);
+			clearInterval(weatherTimer);
+		};
 	}, [briefing?.icao, callGateway]);
 
-	const legacyData = briefing
-		? {
-				common: briefing.weather,
-				taf: briefing.taf,
-				notam: briefing.notams,
-				runways: briefing.runways,
-			}
-		: null;
+	const legacyData = useMemo(
+		() =>
+			briefing
+				? {
+						common: briefing.weather,
+						taf: briefing.taf,
+						notam: briefing.notams,
+						runways: briefing.runways,
+					}
+				: null,
+		[briefing],
+	);
 
 	const vatsim = briefing?.vatsim || {};
 	const controller = vatsim.controllers || [];
@@ -103,11 +142,12 @@ function App() {
 	const departures = vatsim.departures || [];
 	const cruisings = vatsim.cruisings || [];
 
-	const { processedRunways, windDir } = useRunwayAnalysis(legacyData, {
-		CrossWindLimit,
-		TailWindLimit,
-		HeadWindLimit,
-	});
+	const { processedRunways, windDir, windSpeed, isVariable, noSafeRunway } =
+		useRunwayAnalysis(legacyData, {
+			CrossWindLimit,
+			TailWindLimit,
+			HeadWindLimit,
+		});
 
 	return (
 		<div className="app-container">
@@ -123,10 +163,15 @@ function App() {
 				/>
 			</div>
 
-			{error && <div className="error-message">⚠️ {error}</div>}
-			{vatsim.error && (
-				<div className="error-message">⚠️ {vatsim.error}</div>
+			{(inputError || error) && (
+				<div className="error-message">⚠️ {inputError || error}</div>
 			)}
+			{(briefing?.warnings || []).map((w) => (
+				<div key={w} className="error-message">
+					⚠️ {w}
+				</div>
+			))}
+			{vatsim.error && <div className="error-message">⚠️ {vatsim.error}</div>}
 
 			{loading ? (
 				<Skeleton />
@@ -136,135 +181,155 @@ function App() {
 					<div className="dashboard-layout">
 						<div className="left-column">
 							<FadeIn delay={0.1}>
-								<WeatherDashboard
-									data={legacyData}
-									pressureUnit={pressureUnit}
-									setPressureUnit={setPressureUnit}
-								/>
+								<ErrorBoundary resetKey={briefing.icao}>
+									<WeatherDashboard
+										data={legacyData}
+										pressureUnit={pressureUnit}
+										setPressureUnit={setPressureUnit}
+									/>
+								</ErrorBoundary>
 							</FadeIn>
 
 							<FadeIn delay={0.2}>
-								<TafTimeline tafData={briefing.taf} />
+								<ErrorBoundary resetKey={briefing.icao}>
+									<TafTimeline tafData={briefing.taf} />
+								</ErrorBoundary>
 							</FadeIn>
 
 							<FadeIn delay={0.3}>
-								<NotamBoard notams={briefing.notams} />
+								<ErrorBoundary resetKey={briefing.icao}>
+									<NotamBoard notams={briefing.notams} />
+								</ErrorBoundary>
 							</FadeIn>
 						</div>
 
 						<div className="right-column">
 							<FadeIn delay={0.15}>
-								<VatsimStatus
-									controller={controller}
-									loading={false}
-								/>
+								<ErrorBoundary resetKey={briefing.icao}>
+									<VatsimStatus controller={controller} loading={false} />
+								</ErrorBoundary>
 							</FadeIn>
 
 							<FadeIn delay={0.25}>
-								<Radar
-									arrivals={arrivals}
-									departures={departures}
-									cruisings={cruisings}
-									airportLat={briefing.weather?.latitude}
-									airportLon={briefing.weather?.longitude}
-									icao={icao}
-								/>
+								<ErrorBoundary resetKey={briefing.icao}>
+									<Radar
+										arrivals={arrivals}
+										departures={departures}
+										cruisings={cruisings}
+										airportLat={briefing.weather?.latitude}
+										airportLon={briefing.weather?.longitude}
+										icao={briefing.icao}
+									/>
+								</ErrorBoundary>
 							</FadeIn>
 
 							<FadeIn delay={0.35}>
-								<VatsimTraffic
-									arrivals={arrivals}
-									departures={departures}
-									cruisings={cruisings}
-								/>
+								<ErrorBoundary resetKey={briefing.icao}>
+									<VatsimTraffic
+										arrivals={arrivals}
+										departures={departures}
+										cruisings={cruisings}
+									/>
+								</ErrorBoundary>
 							</FadeIn>
 						</div>
 
 						<div className="bottom-full-width">
 							<FadeIn delay={0.4}>
-								<AircraftSelector
-									aircraft={aircraft}
-									setAircraft={setAircraft}
-									setCrossWindLimit={setCrossWindLimit}
-									setTailWindLimit={setTailWindLimit}
-									setHeadWindLimit={setHeadWindLimit}
-								/>
-
-								<div className="limit-setting-section">
-									<LimitControl
-										label="✈️ 機型側風限制"
-										value={CrossWindLimit}
-										setValue={(val) => {
-											setAircraft("CUSTOM");
-											setCrossWindLimit(val);
-										}}
+								<ErrorBoundary resetKey={briefing.icao}>
+									<AircraftSelector
+										aircraft={aircraft}
+										setAircraft={setAircraft}
+										setCrossWindLimit={setCrossWindLimit}
+										setTailWindLimit={setTailWindLimit}
+										setHeadWindLimit={setHeadWindLimit}
 									/>
-									<LimitControl
-										label="✈️ 機型順風限制"
-										value={TailWindLimit}
-										setValue={(val) => {
-											setAircraft("CUSTOM");
-											setTailWindLimit(val);
-										}}
-									/>
-									<LimitControl
-										label="✈️ 機型頂風限制"
-										value={HeadWindLimit}
-										setValue={(val) => {
-											setAircraft("CUSTOM");
-											setHeadWindLimit(val);
-										}}
-									/>
-								</div>
 
-								<LandingWarning data={legacyData} />
-
-								<h3 className="section-title">跑道分析</h3>
-								<div
-									style={{
-										display: "flex",
-										flexDirection: "column",
-										gap: "10px",
-									}}
-								>
-									{processedRunways.length > 0 ? (
-										<>
-											<RunwayMap
-												key={icao}
-												runways={processedRunways}
-												windDir={windDir}
-											/>
-											{processedRunways.map((rwy) => (
-												<RunwayCard
-													key={rwy.name}
-													runwayName={rwy.name}
-													heading={rwy.heading}
-													windDir={windDir}
-													crosswind={rwy.crosswind}
-													headwind={rwy.headwind}
-													isHeadwind={
-														rwy.headwind > 0
-													}
-													isDanger={rwy.isDanger}
-													dangerMessage={
-														rwy.dangerMessage
-													}
-													index={rwy.index}
-													isFirst={rwy.isFirst}
-												/>
-											))}
-										</>
-									) : (
-										<p
-											style={{
-												textAlign: "center",
-												color: "#666",
+									<div className="limit-setting-section">
+										<LimitControl
+											label="✈️ 機型側風限制"
+											value={CrossWindLimit}
+											setValue={(val) => {
+												setAircraft("CUSTOM");
+												setCrossWindLimit(val);
 											}}
-										>
-											無跑道資料
-										</p>
+										/>
+										<LimitControl
+											label="✈️ 機型順風限制"
+											value={TailWindLimit}
+											setValue={(val) => {
+												setAircraft("CUSTOM");
+												setTailWindLimit(val);
+											}}
+										/>
+										<LimitControl
+											label="✈️ 機型頂風限制"
+											value={HeadWindLimit}
+											setValue={(val) => {
+												setAircraft("CUSTOM");
+												setHeadWindLimit(val);
+											}}
+										/>
+									</div>
+
+									<LandingWarning data={legacyData} />
+
+									<h3 className="section-title">跑道分析</h3>
+									{isVariable && (
+										<div className="error-message">
+											⚠️ 風向不定 (VRB) {windSpeed}{" "}
+											kts：無法計算各跑道風分量，已以風速本身保守評估。
+										</div>
 									)}
-								</div>
+									{noSafeRunway && (
+										<div className="error-message">
+											🚨 所有跑道都超出目前設定的風速限制，沒有推薦跑道。
+										</div>
+									)}
+									<div
+										style={{
+											display: "flex",
+											flexDirection: "column",
+											gap: "10px",
+										}}
+									>
+										{processedRunways.length > 0 ? (
+											<>
+												<RunwayMap
+													key={icao}
+													runways={processedRunways}
+													windDir={windDir}
+												/>
+												{processedRunways.map((rwy) => (
+													<RunwayCard
+														key={rwy.name}
+														runwayName={rwy.name}
+														heading={rwy.heading}
+														windDir={windDir}
+														crosswind={rwy.crosswind}
+														headwind={rwy.headwind}
+														crosswindGust={rwy.crosswindGust}
+														headwindGust={rwy.headwindGust}
+														isHeadwind={(rwy.headwind ?? 0) > 0}
+														isDanger={rwy.isDanger}
+														dangerMessage={rwy.dangerMessage}
+														index={rwy.index}
+														isFirst={rwy.isFirst}
+													/>
+												))}
+											</>
+										) : (
+											<p
+												style={{
+													textAlign: "center",
+													color: "#666",
+												}}
+											>
+												無跑道資料
+											</p>
+										)}
+									</div>
+								</ErrorBoundary>
 							</FadeIn>
 						</div>
 					</div>

@@ -16,12 +16,13 @@ AeroBrief 是一個專為虛擬飛行愛好者（Flight SIM / VATSIM / IVAO 使�
     - 提供時間軸視覺化
 
 - **跑道風分量分析**
-    - 計算 Headwind / Crosswind
-    - 自動判斷是否超出機型限制
+    - 計算 Headwind / Crosswind，並納入陣風 (Gust)
+    - 風向不定 (VRB) 時以風速保守評估
+    - 自動判斷是否超出機型限制；全部跑道超限時明確警告
 
 - **VATSIM 即時雷達**
-    - 顯示附近飛機位置與高度
-    - 支援即時更新
+    - 顯示「以該機場為起飛／目的地」的線上航班（依飛行計畫篩選，非距離篩選）與巡航中航班
+    - 每 15 秒更新（輕量端點，天氣每 5 分鐘、且後端有快取）
 
 - **NOTAM 智能導讀**
     - 自動解析航行通告
@@ -141,8 +142,34 @@ AeroBrief 是一個專為虛擬飛行愛好者（Flight SIM / VATSIM / IVAO 使�
 
 ## 🔌 API 設計（簡要）
 
-| Method | Endpoint        | 說明             |
-| ------ | --------------- | ---------------- |
-| GET    | /weather/{icao} | 取得 METAR / TAF |
-| GET    | /notam/{icao}   | 取得 NOTAM       |
-| GET    | /vatsim         | 即時航班資料     |
+| Method | Endpoint            | 說明                                                       |
+| ------ | ------------------- | ---------------------------------------------------------- |
+| POST   | /api/gateway        | `GET_FULL_BRIEFING`（完整簡報）／`GET_VATSIM`（僅雷達與航管） |
+| GET    | /api/weather/{icao} | METAR / TAF / 跑道 / NOTAM（失敗回 4xx/5xx）               |
+| GET    | /api/vatsim/{icao}  | VATSIM 航管與航班                                          |
+| GET    | /api/status         | 健康檢查                                                   |
+
+ICAO 代碼需符合 `^[A-Z0-9]{4}$`；錯誤時回傳對應 HTTP 狀態碼與 `{success:false, error:{message}}`。
+TAF 或 NOTAM 失敗時簡報仍會回傳，並於 `warnings` 欄位說明。
+
+---
+
+## 🧪 測試
+
+    # 後端
+    cd backend && pip install -r requirements-dev.txt && python -m pytest
+
+    # 前端
+    cd frontend && npm install && npm run lint && npm test && npm run build
+
+CI 設定位於 `.github/workflows/ci.yml`。
+
+---
+
+## ⚠️ 已知限制
+
+- 輔助資訊，**不可作為實際飛航簽派依據**。
+- NOTAM 來源為 FAA NOTAM Search 的非官方介面，可能隨時改版；非美國機場資料完整度不一。
+- METAR 風向與 AVWX 跑道 `bearing` 皆為真北（已用 RCTP / KJFK / ZBAA 實測核對：跑道號碼為磁方位，bearing 約差一個磁偏角），因此風分量計算基準一致；但塔台 / ATIS 報的風是磁北，兩者數值會有數度差異。
+- NOTAM 來源 (FAA NOTAM Search，非官方介面) 需帶完整瀏覽器標頭，否則 Akamai 會回 403；單頁最多 30 筆，後端最多取 4 頁，不足時會在簡報提示「NOTAM 可能不完整」。失敗時後端 5 分鐘內不重複請求。NOTAM 時間一律為 UTC（`EST` 後綴是 ICAO 的「預估」而非美東時區）；分類依真實 NOTAM 調校（含無人機／煙火等空域活動，並以子句判斷關閉，避免漏掉 `TWY … CLSD`、也不把 `CLSD FOR ACFT PRKG` 當成滑行道封閉）；尚未生效的公告獨立顯示於「尚未生效」群組，已過期或已取消者不顯示。
+- 機型風速限制為通用參考值，請以 FCOM / 公司 SOP 為準。

@@ -1,0 +1,16 @@
+import os
+import sys
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+os.environ.setdefault("AVWX_TOKEN", "test-token")
+
+
+import pytest  # noqa: E402
+
+
+@pytest.fixture(autouse=True)
+def _clear_cache():
+    import main
+    main._cache.clear()
+    yield
+    main._cache.clear()

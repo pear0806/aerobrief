@@ -17,10 +17,16 @@ const NotamBoard = ({ notams }) => {
 		);
 	}
 
+	// 尚未生效的公告獨立成群組，避免「10/23 才開始的滑行道封閉」被當成現行封閉
+	const UPCOMING = "｜尚未生效";
 	const groupedNotams = {};
 	notams.forEach((notam) => {
-		if (!groupedNotams[notam.category]) groupedNotams[notam.category] = [];
-		groupedNotams[notam.category].push(notam);
+		const key =
+			notam.state === "upcoming"
+				? `${notam.category}${UPCOMING}`
+				: notam.category;
+		if (!groupedNotams[key]) groupedNotams[key] = [];
+		groupedNotams[key].push(notam);
 	});
 
 	const toggleCategory = (category) => {
@@ -41,8 +47,10 @@ const NotamBoard = ({ notams }) => {
 					const categoryNotams = groupedNotams[category];
 					const isExpanded = expandedCategories[category];
 
+					const isUpcoming = category.endsWith(UPCOMING);
 					let headerClass = "header-default";
-					if (category.includes("🚨")) headerClass = "header-danger";
+					if (isUpcoming) headerClass = "header-info";
+					else if (category.includes("🚨")) headerClass = "header-danger";
 					else if (category.includes("🚧") || category.includes("⚠️"))
 						headerClass = "header-warning";
 					else if (
@@ -76,8 +84,10 @@ const NotamBoard = ({ notams }) => {
 										<div key={index} className="notam-card">
 											<div className="notam-header">
 												<span className="notam-time">
-													🕒 {notam.start_time} ➔{" "}
-													{notam.end_time}
+													🕒 {notam.start_time} ➔ {notam.end_time}
+													{notam.state === "unknown"
+														? "（時間無法解析）"
+														: " (UTC)"}
 												</span>
 											</div>
 											<div className="notam-body">

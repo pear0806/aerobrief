@@ -11,6 +11,8 @@ const RunwayCard = ({
 	windDir,
 	crosswind,
 	headwind,
+	crosswindGust,
+	headwindGust,
 	isHeadwind,
 	isDanger,
 	dangerMessage,
@@ -52,14 +54,21 @@ const RunwayCard = ({
 					<small>
 						<Wind size={12} /> 側風 (Cross)
 					</small>
-					<p className="wind-num">{crosswind} kts</p>
+					<p className="wind-num">
+						{crosswind ?? "—"} kts
+						{crosswindGust != null && <small> (陣風 {crosswindGust})</small>}
+					</p>
 				</div>
 				<div className="wind-data">
 					<small>
-						<Wind size={12} />{" "}
-						{isHeadwind ? "逆風 (Head)" : "順風 (Tail)"}
+						<Wind size={12} /> {isHeadwind ? "逆風 (Head)" : "順風 (Tail)"}
 					</small>
-					<p className="wind-num">{Math.abs(headwind)} kts</p>
+					<p className="wind-num">
+						{headwind == null ? "—" : Math.abs(headwind)} kts
+						{headwindGust != null && (
+							<small> (陣風 {Math.abs(headwindGust)})</small>
+						)}
+					</p>
 				</div>
 			</div>
 		</motion.div>

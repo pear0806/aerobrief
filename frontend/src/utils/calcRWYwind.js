@@ -1,13 +1,8 @@
 export const calculateCrosswind = (runwayHeading, windDirection, windSpeed) => {
-	const angleDiff = windDirection - runwayHeading;
-
-	const radians = angleDiff * (Math.PI / 180);
-
-	const crosswind = Math.abs(Math.sin(radians) * windSpeed);
-	const headwind = Math.cos(radians) * windSpeed;
-
+	const radians = ((windDirection - runwayHeading) * Math.PI) / 180;
+	// "+ 0" 把 -0 正規化成 0
 	return {
-		crosswind: Math.round(crosswind),
-		headwind: Math.round(headwind),
+		crosswind: Math.round(Math.abs(Math.sin(radians) * windSpeed)) + 0,
+		headwind: Math.round(Math.cos(radians) * windSpeed) + 0,
 	};
 };

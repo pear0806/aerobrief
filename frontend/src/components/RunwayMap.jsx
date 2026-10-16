@@ -45,8 +45,7 @@ const RunwayMap = ({ runways, windDir }) => {
 				? (groupIndex - (uniqueStrips.length - 1) / 2) * groupSpacing
 				: 0;
 
-		const lrSpread =
-			stripSuffix === "L" ? -22 : stripSuffix === "R" ? 22 : 0;
+		const lrSpread = stripSuffix === "L" ? -22 : stripSuffix === "R" ? 22 : 0;
 
 		const stripOffset = baseSpread + lrSpread;
 
@@ -69,15 +68,9 @@ const RunwayMap = ({ runways, windDir }) => {
 					r={size / 2 - 10}
 					className="map-outer-ring"
 				/>
-				<text
-					x={center}
-					y="25"
-					className="compass-text"
-					textAnchor="middle"
-				>
+				<text x={center} y="25" className="compass-text" textAnchor="middle">
 					N
 				</text>
-
 				{runways.map((rwy) => {
 					const offsetX = getOffset(rwy.name);
 					return (
@@ -103,20 +96,21 @@ const RunwayMap = ({ runways, windDir }) => {
 						</g>
 					);
 				})}
-
-				<g transform={`rotate(${windDir}, ${center}, ${center})`}>
-					<line
-						x1={center}
-						y1={35}
-						x2={center}
-						y2={70}
-						className="map-wind-arrow"
-					/>
-					<polygon
-						points={`${center},70 ${center - 6},55 ${center + 6},55`}
-						fill="#ef4444"
-					/>
-				</g>
+				{windDir != null && (
+					<g transform={`rotate(${windDir}, ${center}, ${center})`}>
+						<line
+							x1={center}
+							y1={35}
+							x2={center}
+							y2={70}
+							className="map-wind-arrow"
+						/>
+						<polygon
+							points={`${center},70 ${center - 6},55 ${center + 6},55`}
+							fill="#ef4444"
+						/>
+					</g>
+				)}{" "}
 			</svg>
 
 			<div className="map-legend">

@@ -33,7 +33,7 @@ const getAirplaneSvg = (color, heading) => `
 const createAirplaneIcon = (heading, isArrival, isCruising) => {
 	let color = "#fbbf24";
 	if (isArrival) {
-		color = "60a5fa";
+		color = "#60a5fa";
 	}
 	if (isCruising) {
 		color = "#a855f7";
@@ -62,28 +62,26 @@ const RadarMap = ({
 	airportLon,
 	icao,
 }) => {
-	if (!airportLat || !airportLon) return null;
+	if (airportLat == null || airportLon == null) return null;
 
 	const center = [airportLat, airportLon];
-	const allTraffic = [
-		...arrivals.map((p) => ({ ...p, isArrival: true, isCruising: false })),
-		...departures.map((p) => ({
-			...p,
-			isArrival: false,
-			isCruising: false,
-		})),
-		...(cruisings || []).map((p) => ({
-			...p,
-			isArrival: false,
-			isCruising: true,
-		})),
-	].filter((p) => p.latitude && p.longitude);
+	// 同一架飛機可能同時在 departures 與 cruisings：以 cruising > arrival > departure 去重
+	const byPilot = new Map();
+	const add = (list, flags) =>
+		(list || []).forEach((p) =>
+			byPilot.set(p.cid ?? p.callsign, { ...p, ...flags }),
+		);
+	add(departures, { isArrival: false, isCruising: false });
+	add(arrivals, { isArrival: true, isCruising: false });
+	add(cruisings, { isArrival: false, isCruising: true });
+	const allTraffic = [...byPilot.values()].filter(
+		(p) => p.latitude != null && p.longitude != null,
+	);
 
 	return (
 		<div className="panel-card radar-map-wrapper">
 			<h3 className="section-title">
-				<RadarIcon size={20} color="#38bdf8" /> 終端空域雷達 (Live
-				Radar)
+				<RadarIcon size={20} color="#38bdf8" /> 終端空域雷達 (Live Radar)
 			</h3>
 
 			<div className="radar-map-container">
@@ -122,7 +120,7 @@ const RadarMap = ({
 									<strong
 										style={{
 											color: pilot.isCruising
-												? "a855f7"
+												? "#a855f7"
 												: pilot.isArrival
 													? "#60a5fa"
 													: "#fbbf24",
@@ -166,9 +164,7 @@ const RadarMap = ({
 									</div>
 									<div>
 										高度:{" "}
-										<span style={{ color: "#f8fafc" }}>
-											{pilot.altitude}
-										</span>{" "}
+										<span style={{ color: "#f8fafc" }}>{pilot.altitude}</span>{" "}
 										ft
 									</div>
 									<div>
@@ -201,9 +197,7 @@ const RadarMap = ({
 				<span>
 					<Plane size={18} color="#a855f7" /> 巡航航班
 				</span>
-				<span className="legend-hint">
-					(點擊飛機圖示可查看詳細資訊)
-				</span>
+				<span className="legend-hint">(點擊飛機圖示可查看詳細資訊)</span>
 			</div>
 		</div>
 	);

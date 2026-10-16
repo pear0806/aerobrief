@@ -1,76 +1,119 @@
 import { useMemo } from "react";
 
 import { calculateCrosswind } from "../utils/calcRWYwind.js";
+import { toKnots } from "../utils/units.js";
+
+const EMPTY = {
+	processedRunways: [],
+	windDir: null,
+	windSpeed: 0,
+	windGust: null,
+	isVariable: false,
+	noSafeRunway: false,
+};
+
+const angleDiff = (a, b) => {
+	const d = Math.abs(a - b) % 360;
+	return d > 180 ? 360 - d : d;
+};
 
 export const useRunwayAnalysis = (data, limits) => {
 	const { CrossWindLimit, TailWindLimit, HeadWindLimit } = limits;
 
 	return useMemo(() => {
-		if (!data || !data.runways || data.runways.length === 0) {
-			return { processedRunways: [], windDir: 0 };
-		}
+		if (!data?.common || !data.runways?.length) return EMPTY;
 
-		const windSpd = data.common.wind_speed?.value || 0;
-		const windDir = data.common.wind_direction?.value || 0;
+		const c = data.common;
+		const unit = c.units?.wind_speed;
+		const windSpeed = toKnots(c.wind_speed?.value ?? 0, unit);
+		const windGust =
+			c.wind_gust?.value != null ? toKnots(c.wind_gust.value, unit) : null;
+		const peak = Math.max(windSpeed, windGust ?? 0);
+		const rawDir = c.wind_direction?.value;
+		const windDir = rawDir == null ? null : Number(rawDir);
+		// 風向不定 (VRB) 且有風：無法算分量，採最壞情況（風速本身視為側風）
+		const isVariable = windDir === null && peak > 0;
 
-		const proccessed = data.runways.map((rwy, index) => {
-			const { crosswind, headwind } = calculateCrosswind(
-				rwy.heading,
-				windDir,
-				windSpd,
-			);
+		const processed = data.runways.map((rwy, index) => {
+			if (windDir === null) {
+				const danger = isVariable && peak > CrossWindLimit;
+				return {
+					name: rwy.name,
+					heading: rwy.heading,
+					crosswind: null,
+					headwind: null,
+					crosswindGust: null,
+					headwindGust: null,
+					isDanger: danger,
+					dangerMessage: danger ? "⚠️ 風向不定，風速超過側風限制" : "",
+					index,
+				};
+			}
 
-			let isDanger = false,
-				isCrossWindDanger = false,
-				isTailWindDanger = false,
-				isHeadWindDanger = false,
-				dangerMessage = "";
+			const steady = calculateCrosswind(rwy.heading, windDir, windSpeed);
+			const gusty =
+				windGust !== null
+					? calculateCrosswind(rwy.heading, windDir, windGust)
+					: steady;
 
-			if (crosswind > CrossWindLimit) isCrossWindDanger = true;
-			if (headwind > 0 && headwind > HeadWindLimit)
-				isHeadWindDanger = true;
-			if (headwind < 0 && Math.abs(headwind) > TailWindLimit)
-				isTailWindDanger = true;
+			const worstCross = Math.max(steady.crosswind, gusty.crosswind);
+			const worstHead = Math.max(steady.headwind, gusty.headwind);
+			const worstTail = Math.max(0, -steady.headwind, -gusty.headwind);
 
-			if (isCrossWindDanger || isTailWindDanger || isHeadWindDanger)
-				isDanger = true;
+			const isCrossWindDanger = worstCross > CrossWindLimit;
+			const isTailWindDanger = worstTail > TailWindLimit;
+			const isHeadWindDanger = worstHead > HeadWindLimit;
+			const isDanger =
+				isCrossWindDanger || isTailWindDanger || isHeadWindDanger;
 
-			if (isCrossWindDanger && isTailWindDanger)
-				dangerMessage = "⚠️ 側風、尾風超限";
-			else if (isCrossWindDanger && isHeadWindDanger)
-				dangerMessage = "⚠️ 側風、頂風超限";
-			else if (isCrossWindDanger) dangerMessage = "⚠️ 側風超限";
-			else if (isTailWindDanger) dangerMessage = "⚠️ 尾風超限";
-			else if (isHeadWindDanger) dangerMessage = "⚠️ 頂風超限";
+			const parts = [];
+			if (isCrossWindDanger) parts.push("側風");
+			if (isTailWindDanger) parts.push("尾風");
+			if (isHeadWindDanger) parts.push("頂風");
+			const gustTriggered =
+				windGust !== null &&
+				((isCrossWindDanger && steady.crosswind <= CrossWindLimit) ||
+					(isTailWindDanger && -steady.headwind <= TailWindLimit));
 
 			return {
 				name: rwy.name,
 				heading: rwy.heading,
-				crosswind,
-				headwind,
+				crosswind: steady.crosswind,
+				headwind: steady.headwind,
+				crosswindGust: windGust !== null ? gusty.crosswind : null,
+				headwindGust: windGust !== null ? gusty.headwind : null,
 				isDanger,
-				dangerMessage,
+				dangerMessage: isDanger
+					? `⚠️ ${parts.join("、")}超限${gustTriggered ? "（陣風）" : ""}`
+					: "",
 				index,
 			};
 		});
 
-		const sortedRunway = [...proccessed].sort(
-			(a, b) => b.headwind - a.headwind,
+		const sorted = [...processed].sort(
+			(a, b) => (b.headwind ?? -999) - (a.headwind ?? -999),
 		);
-		const maxHeading =
-			sortedRunway.length > 0 ? sortedRunway[0].headwind : 0;
-		const bestHeading =
-			sortedRunway.length > 0 ? sortedRunway[0].heading : 0;
 
-		const finalRunways = sortedRunway.map((rwy) => {
-			let diff = Math.abs(rwy.heading - bestHeading);
-			if (diff > 180) diff = 360 - diff;
-			return {
-				...rwy,
-				isFirst: rwy.headwind >= maxHeading - 2 && diff < 90,
-			};
-		});
+		// 只從「未超限」的跑道挑推薦；全部超限時不推薦任何一條
+		const safe = sorted.filter((r) => !r.isDanger && r.headwind !== null);
+		const best = safe[0];
+		const finalRunways = sorted.map((rwy) => ({
+			...rwy,
+			isFirst:
+				!!best &&
+				!rwy.isDanger &&
+				rwy.headwind !== null &&
+				rwy.headwind >= best.headwind - 2 &&
+				angleDiff(rwy.heading, best.heading) < 90,
+		}));
 
-		return { processedRunways: finalRunways, windDir };
+		return {
+			processedRunways: finalRunways,
+			windDir,
+			windSpeed,
+			windGust,
+			isVariable,
+			noSafeRunway: !best && !(windDir === null && !isVariable),
+		};
 	}, [data, CrossWindLimit, HeadWindLimit, TailWindLimit]);
 };
