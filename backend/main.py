@@ -16,6 +16,7 @@ from pydantic import BaseModel
 
 from notam_parser import process_notams, summarize_closures
 from ratelimit import RateLimiter
+from vatspy import callsign_prefixes
 
 load_dotenv()
 log = logging.getLogger("aerobrief")
@@ -354,14 +355,17 @@ async def get_vatsim(icao: str):
         return {"error": "雷達系統啟動中，請稍候"}
 
     controllers = []
+    # 呼號第一段不一定是 ICAO：澳洲 YBBN → BN_TWR、美國 KJFK → JFK_TWR（VATSpy 對照表）
+    prefixes = callsign_prefixes(icao)
     for c in data.get("controllers", []):
         callsign = c.get("callsign", "")
         parts = callsign.upper().split("_")
         # 觀察員 (facility 0 / *_OBS) 不是航管，排除
         if c.get("facility") == 0 or parts[-1] == "OBS":
             continue
-        # 以 "_" 分段精確比對，避免 RCTPX_xxx 命中 RCTP；支援 WSSS_3_GND 這類多段呼號
-        if parts[0] == icao:
+        # 以 "_" 分段精確比對，避免 RCTPX_xxx 命中 RCTP、BN-DOS_CTR（區域管制中心）命中 YBBN；
+        # 支援 WSSS_3_GND 這類多段呼號
+        if parts[0] in prefixes:
             controllers.append({"callsign": callsign, "cid": c.get("cid"),
                                 "frequency": c.get("frequency"), "name": c.get("name")})
 
