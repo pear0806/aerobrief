@@ -34,12 +34,18 @@ const SearchBar = ({
 					placeholder="輸入機場代碼 (如 RCTP)"
 					onKeyDown={handleKeyDown}
 					maxLength={4}
-					disabled={loading}
+					aria-label="ICAO 機場代碼"
+					autoCapitalize="characters"
+					autoComplete="off"
+					spellCheck={false}
 				/>
 
 				<button
+					type="button"
 					className={`star-btn ${isFavorited ? "isFavorited" : ""}`}
 					onClick={() => toggleFavorite(icao)}
+					aria-label={isFavorited ? `從收藏移除 ${icao}` : `收藏 ${icao}`}
+					aria-pressed={isFavorited}
 				>
 					<Star
 						fill={isFavorited ? "#fbbf24" : "none"}
@@ -49,8 +55,9 @@ const SearchBar = ({
 				</button>
 
 				<button
+					type="button"
 					className="search-btn"
-					onClick={onSearch}
+					onClick={() => onSearch()}
 					disabled={loading || !icao}
 				>
 					{loading ? (
@@ -69,6 +76,7 @@ const SearchBar = ({
 					{favorite.map((fav) => (
 						<button
 							key={fav}
+							type="button"
 							onClick={() => {
 								setIcao(fav);
 								onSearch(fav);

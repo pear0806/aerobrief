@@ -7,6 +7,7 @@ const LimitControl = ({ label, value, setValue }) => (
 			<input
 				className="limit-setting-input"
 				type="number"
+				aria-label={label}
 				value={value}
 				onChange={(e) => setValue(Number(e.target.value))}
 				min={0}

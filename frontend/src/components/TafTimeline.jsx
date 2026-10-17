@@ -1,6 +1,11 @@
 import "../assets/styles/TafTimeline.css";
 
+import { formatTafTime } from "../utils/time.js";
 import { windUnitLabel } from "../utils/units.js";
+
+const cloudText = (c) =>
+	c.repr ?? `${c.type ?? ""}${String(c.altitude ?? "").padStart(3, "0")}`;
+const isCeiling = (c) => c.type === "BKN" || c.type === "OVC" || c.type === "VV";
 
 const TafTimeline = ({ tafData }) => {
 	if (!tafData || !tafData.forecast || tafData.forecast.length === 0) {
@@ -19,9 +24,15 @@ const TafTimeline = ({ tafData }) => {
 						<div key={index} className="timeline-item">
 							<div className="timeline-time">
 								<div className="time-text">
-									{period.start_time?.repr}z - {period.end_time?.repr}z
+									{formatTafTime(period.start_time?.repr)} →{" "}
+									{formatTafTime(period.end_time?.repr)}
 								</div>
-								<div className="time-type">{period.type || "FM"} </div>
+								<div className="time-type">
+									{period.type || "FM"}
+									{period.probability?.value
+										? ` PROB${period.probability.value}`
+										: ""}
+								</div>
 							</div>
 
 							<div className="timeline-divider">
@@ -46,6 +57,21 @@ const TafTimeline = ({ tafData }) => {
 									<span className="icon">👁️</span>
 									{period.visibility?.repr ?? "-"}
 								</div>
+
+								{period.clouds && period.clouds.length > 0 && (
+									<div className="forecast-detail">
+										<span className="icon">☁️</span>
+										{period.clouds.map((c, i) => (
+											<span
+												key={i}
+												className={isCeiling(c) ? "ceiling-layer" : ""}
+												style={{ marginRight: 6 }}
+											>
+												{cloudText(c)}
+											</span>
+										))}
+									</div>
+								)}
 
 								{period.wx_codes && period.wx_codes.length > 0 && (
 									<div className="forecast-detail wx-warning">

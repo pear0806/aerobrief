@@ -1,3 +1,4 @@
+import "leaflet/dist/leaflet.css";
 import "../assets/styles/Radar.css";
 
 import L from "leaflet";
@@ -30,21 +31,24 @@ const getAirplaneSvg = (color, heading) => `
 	</div>
 `;
 
+// 每 15 秒資料刷新時，若每次都 new L.divIcon，react-leaflet 會判定 icon 變了而重畫所有 marker。
+// 航向量化到 5° 並快取，同樣外觀共用同一個 icon 物件（最多 3 色 × 72 種航向）。
+const iconCache = new Map();
 const createAirplaneIcon = (heading, isArrival, isCruising) => {
-	let color = "#fbbf24";
-	if (isArrival) {
-		color = "#60a5fa";
+	const color = isCruising ? "#a855f7" : isArrival ? "#60a5fa" : "#fbbf24";
+	const h = (Math.round((Number(heading) || 0) / 5) * 5) % 360;
+	const key = `${color}:${h}`;
+	let icon = iconCache.get(key);
+	if (!icon) {
+		icon = L.divIcon({
+			className: "custom-airplane-icon",
+			html: getAirplaneSvg(color, h),
+			iconSize: [28, 28],
+			iconAnchor: [14, 14],
+		});
+		iconCache.set(key, icon);
 	}
-	if (isCruising) {
-		color = "#a855f7";
-	}
-
-	return L.divIcon({
-		className: "custom-airplane-icon",
-		html: getAirplaneSvg(color, heading),
-		iconSize: [28, 28],
-		iconAnchor: [14, 14],
-	});
+	return icon;
 };
 
 const airportIcon = L.divIcon({
@@ -84,7 +88,11 @@ const RadarMap = ({
 				<RadarIcon size={20} color="#38bdf8" /> 終端空域雷達 (Live Radar)
 			</h3>
 
-			<div className="radar-map-container">
+			<div
+				className="radar-map-container"
+				role="region"
+				aria-label={`${icao} 終端空域雷達地圖`}
+			>
 				<MapContainer
 					center={center}
 					zoom={10}
@@ -105,9 +113,9 @@ const RadarMap = ({
 						</Popup>
 					</Marker>
 
-					{allTraffic.map((pilot, index) => (
+					{allTraffic.map((pilot) => (
 						<Marker
-							key={`${pilot.cid}-${index}`}
+							key={pilot.cid ?? pilot.callsign}
 							position={[pilot.latitude, pilot.longitude]}
 							icon={createAirplaneIcon(
 								pilot.heading,

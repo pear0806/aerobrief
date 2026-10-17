@@ -46,3 +46,10 @@
 		width: 100%;
 	}
 }
+
+.aircraft-notice {
+	display: block;
+	margin-top: 6px;
+	color: #94a3b8;
+	font-size: 0.75rem;
+}

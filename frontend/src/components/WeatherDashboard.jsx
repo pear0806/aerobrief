@@ -80,9 +80,14 @@ const WeatherDashboard = ({ data, pressureUnit, setPressureUnit }) => {
 				<div className="metric-item">
 					<label>
 						高度計{" "}
-						<span className="togglePressureUnit" onClick={toggleUnit}>
+						<button
+							type="button"
+							className="togglePressureUnit"
+							onClick={toggleUnit}
+							aria-label={`切換氣壓單位，目前為 ${pressureUnit}`}
+						>
 							切換單位
-						</span>
+						</button>
 					</label>
 					<div className="value">
 						{convertPressure(

@@ -41,8 +41,9 @@ def test_weather_is_cached(monkeypatch):
     assert len(seen) == n, "第二次呼叫應命中快取，不再打外部 API"
 
 
-def test_failed_responses_are_not_cached(monkeypatch):
-    monkeypatch.setattr(main.httpx, "AsyncClient", make_client("metar_404"))
+def test_transient_failures_are_not_cached(monkeypatch):
+    """逾時 / 連線錯誤等暫時性失敗不記，下一次請求可以立即重試。"""
+    monkeypatch.setattr(main.httpx, "AsyncClient", make_client("metar_exc"))
     assert "error" in run(main.get_weather("RCTP"))
     monkeypatch.setattr(main.httpx, "AsyncClient", make_client("ok"))
     assert "error" not in run(main.get_weather("RCTP"))

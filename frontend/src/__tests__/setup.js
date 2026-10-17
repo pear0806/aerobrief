@@ -1,4 +1,4 @@
-// jsdom 沒有 IntersectionObserver，framer-motion 的 whileInView 需要它
+// jsdom 沒有 IntersectionObserver（Leaflet / 其他函式庫可能會用到）
 class IO {
 	observe() {}
 	unobserve() {}

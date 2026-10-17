@@ -12,5 +12,9 @@ import pytest  # noqa: E402
 def _clear_cache():
     import main
     main._cache.clear()
+    main._inflight.clear()
+    main.rate_limiter._hits.clear()
     yield
     main._cache.clear()
+    main._inflight.clear()
+    main.rate_limiter._hits.clear()

@@ -29,10 +29,20 @@ const NotamBoard = ({ notams }) => {
 		groupedNotams[key].push(notam);
 	});
 
+	// 預設展開「現行有效」的關閉類公告（🚨 機場/跑道關閉、🚧 滑行道關閉），
+	// 其餘維持收合；使用者手動切換後以使用者選擇為準。
+	const isOpen = (category) => {
+		if (category in expandedCategories) return expandedCategories[category];
+		return (
+			!category.endsWith(UPCOMING) &&
+			(category.includes("🚨") || category.includes("🚧"))
+		);
+	};
+
 	const toggleCategory = (category) => {
 		setExpandedCategories((prev) => ({
 			...prev,
-			[category]: !prev[category],
+			[category]: !isOpen(category),
 		}));
 	};
 
@@ -45,7 +55,7 @@ const NotamBoard = ({ notams }) => {
 			<div className="notam-groups">
 				{Object.keys(groupedNotams).map((category) => {
 					const categoryNotams = groupedNotams[category];
-					const isExpanded = expandedCategories[category];
+					const isExpanded = isOpen(category);
 
 					const isUpcoming = category.endsWith(UPCOMING);
 					let headerClass = "header-default";
@@ -63,8 +73,10 @@ const NotamBoard = ({ notams }) => {
 					return (
 						<div key={category} className="notam-category-group">
 							<button
+								type="button"
 								className={`category-header ${headerClass}`}
 								onClick={() => toggleCategory(category)}
+								aria-expanded={!!isExpanded}
 							>
 								<span className="category-title">
 									{category}{" "}
@@ -81,8 +93,11 @@ const NotamBoard = ({ notams }) => {
 							{isExpanded && (
 								<div className="notam-list">
 									{categoryNotams.map((notam, index) => (
-										<div key={index} className="notam-card">
+										<div key={notam.id ?? index} className="notam-card">
 											<div className="notam-header">
+												{notam.id && (
+													<span className="notam-id">{notam.id}</span>
+												)}
 												<span className="notam-time">
 													🕒 {notam.start_time} ➔ {notam.end_time}
 													{notam.state === "unknown"

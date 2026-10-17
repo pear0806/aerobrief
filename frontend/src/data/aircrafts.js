@@ -1,7 +1,11 @@
 // src/data/aircrafts.js
 
+/** UI 與 README 共用的免責說明：數值為通用參考值，尚未逐一對照各機型 FCOM。 */
+export const AIRCRAFT_LIMITS_NOTICE =
+	"機型限制為通用參考值（未逐一核對 FCOM），請以 FCOM / 公司 SOP 為準。";
+
 /**
- * AeroBrief 機型風速限制資料庫 (基於 FCOM / 航空公司標準操作程序 SOP)
+ * AeroBrief 機型風速限制資料庫（通用參考值；實際限制以 FCOM / 公司 SOP 為準）
  * 單位: Knots (kts)
  * * 備註：
  * 1. cross: 側風限制 (多數基於 Max Demonstrated 或航空公司上限)

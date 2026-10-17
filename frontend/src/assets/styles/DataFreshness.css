@@ -1,0 +1,23 @@
+.data-freshness {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px 16px;
+	align-items: center;
+	padding: 8px 14px;
+	margin-bottom: 14px;
+	border-radius: 8px;
+	font-size: 0.85rem;
+	color: #94a3b8;
+	background: rgba(148, 163, 184, 0.08);
+	border: 1px solid rgba(148, 163, 184, 0.2);
+}
+.data-freshness.warn {
+	color: #fbbf24;
+	background: rgba(245, 158, 11, 0.1);
+	border-color: rgba(245, 158, 11, 0.4);
+}
+.data-freshness.stale {
+	color: #fca5a5;
+	background: rgba(239, 68, 68, 0.12);
+	border-color: rgba(239, 68, 68, 0.5);
+}

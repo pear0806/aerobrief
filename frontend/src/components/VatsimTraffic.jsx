@@ -3,7 +3,10 @@ import "../assets/styles/VatsimTraffic.css";
 import { Coffee, Plane, PlaneLanding, PlaneTakeoff, Radar } from "lucide-react";
 
 const VatsimTraffic = ({ arrivals, departures, cruisings }) => {
-	const totalFlights = arrivals.length + departures.length + cruisings.length;
+	// cruisings 是 arrivals / departures 的子集（同一架飛機可同時屬於兩者），要去重再計數
+	const totalFlights = new Set(
+		[...arrivals, ...departures, ...cruisings].map((p) => p.cid ?? p.callsign),
+	).size;
 
 	if (totalFlights === 0) {
 		return (
@@ -39,7 +42,7 @@ const VatsimTraffic = ({ arrivals, departures, cruisings }) => {
 						{arrivals.length > 0 ? (
 							arrivals.map((pilot) => (
 								<div
-									key={pilot.callsign}
+									key={`${pilot.cid ?? ""}-${pilot.callsign}`}
 									className="flight-card arr-card"
 								>
 									<div className="flight-main">
@@ -78,7 +81,7 @@ const VatsimTraffic = ({ arrivals, departures, cruisings }) => {
 						{departures.length > 0 ? (
 							departures.map((pilot) => (
 								<div
-									key={pilot.callsign}
+									key={`${pilot.cid ?? ""}-${pilot.callsign}`}
 									className="flight-card dep-card"
 								>
 									<div className="flight-main">
@@ -117,7 +120,7 @@ const VatsimTraffic = ({ arrivals, departures, cruisings }) => {
 						{cruisings.length > 0 ? (
 							cruisings.map((pilot) => (
 								<div
-									key={pilot.callsign}
+									key={`${pilot.cid ?? ""}-${pilot.callsign}`}
 									className="flight-card crs-card"
 								>
 									<div className="flight-main">

@@ -19,9 +19,21 @@ _WORK = re.compile(
     r"\b(?:WIP|WORK IN PROGRESS|CRANES?|OBST|OBSTACLES?|OBSTRUCTION|CONSTRUCTION)\b")
 _AIRSPACE = re.compile(
     r"\b(?:UNMANNED|DRONES?|UAS|UAV|FIREWORKS|ROCKETS?|LASER|PARACHUTE|BALLOONS?)\b")
-_CLSD = re.compile(r"\b(?:CLSD|CLOSED)\b")
+_CLSD = re.compile(r"\b(?:CLSD|CLOSED|CLOSURE)\b")
+# 機場整場關閉：AD / AP / AERODROME / AIRPORT 必須「緊接」在 CLSD 前（避免 "AD TWY A CLSD" 誤判）
+_AD_CLSD = re.compile(
+    r"\b(?:AD|AP|AERODROME|AIRPORT)\b(?:\s+(?:AD|AP|AERODROME|AIRPORT)\b)*\s+(?:CLSD|CLOSED|CLOSURE)\b")
+# 「RWY 05L/23R NOT AVBL / U/S」：跑道號碼後「緊接」不可用字樣才算跑道不可用
+# （"RWY 05L PAPI NOT AVBL"、"RWY 05L LGT U/S" 中間夾了設施字，不算）
+_RWY_IDS = r"\d{2}[LRC]?(?:\s*(?:/|,|AND)\s*\d{2}[LRC]?)*"
+_RWY_UNAVBL = re.compile(
+    r"\b(?:RWYS?|RUNWAYS?)\s+(" + _RWY_IDS + r")\s+(?:NOT\s+AVBL|NOT\s+AVAILABLE|UNAVBL|UNAVAILABLE|U/S)\b")
+_RWY_WITH_IDS = re.compile(r"\b(?:RWYS?|RUNWAYS?)\s+(" + _RWY_IDS + r")\b")
+_ALL_RWY = re.compile(r"\bALL\s+(?:RWYS?|RUNWAYS?)\b")
+_IDENT = re.compile(r"\d{2}[LRC]?")
 _PARKING_ONLY = re.compile(r"\s*(?:FOR|TO)\s+(?:ACFT\s+)?(?:PRKG|PARKING|STANDS?|TOWING)\b")
 
+CAT_AD_CLOSED = "🚨 機場關閉"
 CAT_RWY_CLOSED = "🚨 跑道關閉"
 CAT_TWY_CLOSED = "🚧 滑行道關閉"
 CAT_RWY = "🛫 跑道資訊"
@@ -32,7 +44,7 @@ CAT_TWY = "🚕 滑行道資訊"
 CAT_GENERAL = "📝 一般資訊"
 
 SORT_ORDER = {
-    CAT_RWY_CLOSED: 0, CAT_TWY_CLOSED: 1, CAT_RWY: 2, CAT_NAV: 3,
+    CAT_AD_CLOSED: -1, CAT_RWY_CLOSED: 0, CAT_TWY_CLOSED: 1, CAT_RWY: 2, CAT_NAV: 3,
     CAT_AIRSPACE: 4, CAT_WORK: 5, CAT_TWY: 6, CAT_GENERAL: 7,
 }
 
@@ -52,10 +64,39 @@ def _is_negated(text: str, pos: int) -> bool:
 _CLAUSE_SPLIT = re.compile(r"[.;,](?!\d)")
 
 
-def _closure_kind(text: str):
-    """回傳 'rwy' / 'twy' / None。跑道優先；導航設施在前（ILS RWY 05L CLSD）不算跑道關閉。"""
-    found_twy = False
+def _idents(text: str):
+    return _IDENT.findall(text)
+
+
+def analyze_closure(text: str):
+    """回傳 (kind, runways, ad_closed)。
+
+    kind: 'ad'（機場關閉）/ 'rwy' / 'twy' / None；優先順序 ad > rwy > twy。
+    runways: 被公告關閉的跑道號碼（如 ['05L','23R']）；'ALL' 代表全部跑道；
+             有關閉但抓不到號碼時為空 list（前端仍會顯示 NOTAM 警示）。
+    導航設施在前（ILS RWY 05L CLSD）不算跑道關閉。
+    """
+    found_twy, found_ad = False, False
+    runways, seen_rwy_closure = [], False
+
     for clause in _CLAUSE_SPLIT.split(text):
+        # --- 機場關閉
+        for am in _AD_CLSD.finditer(clause):
+            end_word = _CLSD.search(clause, am.start())
+            if end_word and _is_negated(clause, end_word.start()):
+                continue
+            if not _PARKING_ONLY.match(clause[am.end(): am.end() + 30]):
+                found_ad = True
+
+        # --- RWY ... NOT AVBL / U/S（僅限號碼緊接）
+        for um in _RWY_UNAVBL.finditer(clause):
+            nav = _NAV.search(clause[: um.start()])
+            if nav:
+                continue
+            seen_rwy_closure = True
+            runways.extend(_idents(um.group(1)))
+
+        # --- CLSD / CLOSED / CLOSURE
         for cm in _CLSD.finditer(clause):
             if _is_negated(clause, cm.start()):
                 continue
@@ -66,19 +107,37 @@ def _closure_kind(text: str):
             nav = _NAV.search(before)
             rwy, twy = _RWY.search(before), _TWY.search(before)
             if rwy and not (nav and nav.start() < rwy.start()):
-                return "rwy"
-            if twy and not (nav and nav.start() < twy.start()):
+                seen_rwy_closure = True
+                for rm in _RWY_WITH_IDS.finditer(before):
+                    runways.extend(_idents(rm.group(1)))
+                if _ALL_RWY.search(before):
+                    runways.append("ALL")
+            elif twy and not (nav and nav.start() < twy.start()):
                 found_twy = True
-    return "twy" if found_twy else None
+
+    runways = sorted(set(runways))
+    if found_ad:
+        return "ad", runways, True
+    if seen_rwy_closure:
+        return "rwy", runways, False
+    return ("twy" if found_twy else None), [], False
+
+
+def _closure_kind(text: str):
+    """相容舊介面：只回傳 'rwy' / 'twy' / None（機場關閉視為最嚴重的 'rwy'）。"""
+    kind, _, _ = analyze_closure(text)
+    return "rwy" if kind == "ad" else kind
 
 
 def categorize_notam(raw_text: str) -> str:
     text = _body(raw_text or "")
 
-    closure = _closure_kind(text)
-    if closure == "rwy":
+    kind, _, _ = analyze_closure(text)
+    if kind == "ad":
+        return CAT_AD_CLOSED
+    if kind == "rwy":
         return CAT_RWY_CLOSED
-    if closure == "twy":
+    if kind == "twy":
         return CAT_TWY_CLOSED
 
     hits = {}
@@ -152,9 +211,12 @@ def process_notams(notam, now=None):
             continue
 
         raw_end = str(item.get("endDate") or "").strip()
+        _, closed_rwys, ad_closed = analyze_closure(_body(raw_text))
         parsed.append({
             "id": item.get("notamNumber"),
             "category": categorize_notam(raw_text),
+            "closed_runways": closed_rwys,
+            "aerodrome_closed": ad_closed,
             "raw": raw_text,
             "state": state,
             "start_time": _fmt(start) if start else (item.get("startDate") or "Unknown"),
@@ -168,3 +230,22 @@ def process_notams(notam, now=None):
     # 現行有效的排前面，再依嚴重度排序
     parsed.sort(key=lambda x: (STATE_RANK.get(x["state"], 9), SORT_ORDER.get(x["category"], 99)))
     return parsed
+
+
+def summarize_closures(notams):
+    """把「現行有效」(active / unknown) NOTAM 的關閉資訊彙整給前端做跑道推薦。
+    尚未生效 (upcoming) 的不計入，避免未來的關閉影響現在的推薦。"""
+    closed, ids, ad = set(), [], False
+    for n in notams or []:
+        if n.get("state") not in ("active", "unknown"):
+            continue
+        if n.get("aerodrome_closed"):
+            ad = True
+            ids.append(n.get("id"))
+        if n.get("category") in (CAT_RWY_CLOSED,) and (n.get("closed_runways") or []):
+            closed.update(n["closed_runways"])
+            ids.append(n.get("id"))
+        elif n.get("category") == CAT_RWY_CLOSED:
+            ids.append(n.get("id"))
+    return {"aerodrome_closed": ad, "closed_runways": sorted(closed),
+            "notam_ids": [i for i in dict.fromkeys(ids) if i]}

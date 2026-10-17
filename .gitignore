@@ -1,4 +1,4 @@
-# Logs
+# ===== Logs =====
 logs
 *.log
 npm-debug.log*
@@ -6,34 +6,58 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 
-# Node / Vite  (package-lock.json 需要提交，確保安裝可重現)
-node_modules
-dist
-dist-ssr
-coverage
-*.local
+# ===== Node / Vite / React (package-lock.json 需要提交，確保安裝可重現) =====
+node_modules/
+dist/
+dist-ssr/
+# vite-plugin-pwa 開發模式產物
+dev-dist/
 .vite/
+*.local
+*.tsbuildinfo
+.eslintcache
 
-# Env / secrets
+# ===== 測試與覆蓋率 =====
+coverage/
+htmlcov/
+.coverage
+.coverage.*
+coverage.xml
+.nyc_output/
+
+# ===== Env / secrets（範本 .env.example 要提交） =====
 .env
 .env.*
 !.env.example
 
-# Python
+# ===== Python =====
 __pycache__/
 *.py[cod]
 *$py.class
 venv/
 .venv/
+env/
 .pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
+build/
 
-# Editor
+# ===== 部署平台 =====
+.vercel/
+.render/
+
+# ===== Editor / IDE =====
 .vscode/*
 !.vscode/extensions.json
-.idea
-.DS_Store
+.idea/
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
 *.sw?
+
+# ===== OS =====
+.DS_Store
+Thumbs.db
+desktop.ini

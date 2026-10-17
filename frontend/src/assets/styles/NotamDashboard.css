@@ -147,3 +147,10 @@
 		line-height: 1.4;
 	}
 }
+
+.notam-id {
+	margin-right: 8px;
+	font-family: monospace;
+	font-size: 0.8rem;
+	color: #cbd5e1;
+}

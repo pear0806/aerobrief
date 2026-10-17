@@ -1,7 +1,6 @@
 import "../assets/styles/RunwayCard.css";
 
-import { motion } from "framer-motion";
-import { AlertTriangle, CheckCircle2, Wind } from "lucide-react";
+import { AlertTriangle, Ban, CheckCircle2, Wind } from "lucide-react";
 
 import WindCompass from "./WindCompass.jsx";
 
@@ -18,30 +17,50 @@ const RunwayCard = ({
 	dangerMessage,
 	index,
 	isFirst,
+	isClosed = false,
+	approx = false,
 }) => {
-	let statusClass = isDanger ? "danger" : isFirst ? "recommended" : "normal";
+	const statusClass = isClosed
+		? "closed"
+		: isDanger
+			? "danger"
+			: isFirst
+				? "recommended"
+				: "normal";
 
 	return (
-		<motion.div
-			className={`panel-card runway-card-container ${statusClass}`}
-			initial={{ opacity: 0, y: 30 }}
-			whileInView={{ opacity: 1, y: 0 }}
-			viewport={{ once: true, amount: 0.3 }}
-			transition={{ duration: 0.4, delay: index * 0.1 }}
+		<div
+			className={`panel-card runway-card-container card-enter ${statusClass}`}
+			style={{ animationDelay: `${Math.min(index, 8) * 0.1}s` }}
 		>
 			<div className="runway-info-left">
 				<h3 className="runway-title">
-					跑道 {runwayName} ({heading}°)
-					{isFirst && !isDanger && (
+					跑道 {runwayName} ({approx ? "≈" : ""}
+					{heading}°)
+					{approx && (
+						<span
+							className="approx-tag"
+							title="此跑道沒有精確方位資料，以跑道號碼 ×10（磁方位）估算，與 METAR 的真北風向有磁偏角誤差"
+						>
+							估算
+						</span>
+					)}
+					{isFirst && !isDanger && !isClosed && (
 						<span className="recommended-badge">
 							<CheckCircle2 size={12} /> 最佳推薦
 						</span>
 					)}
 				</h3>
-				{isDanger && (
-					<span className="danger-message">
-						<AlertTriangle size={14} /> {dangerMessage}
+				{isClosed ? (
+					<span className="danger-message closed-message">
+						<Ban size={14} /> {dangerMessage}
 					</span>
+				) : (
+					isDanger && (
+						<span className="danger-message">
+							<AlertTriangle size={14} /> {dangerMessage}
+						</span>
+					)
 				)}
 			</div>
 
@@ -71,7 +90,7 @@ const RunwayCard = ({
 					</p>
 				</div>
 			</div>
-		</motion.div>
+		</div>
 	);
 };
 

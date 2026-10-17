@@ -136,3 +136,40 @@
 		align-items: center;
 	}
 }
+
+.runway-card-container.closed {
+	border-color: rgba(239, 68, 68, 0.7);
+	background-image: repeating-linear-gradient(
+		135deg,
+		rgba(239, 68, 68, 0.08) 0 10px,
+		transparent 10px 20px
+	);
+}
+.runway-card-container.closed .runway-title {
+	text-decoration: line-through;
+	opacity: 0.8;
+}
+.closed-message {
+	font-weight: 700;
+}
+.approx-tag {
+	margin-left: 6px;
+	padding: 1px 6px;
+	border-radius: 4px;
+	font-size: 0.7rem;
+	font-weight: 500;
+	color: #fbbf24;
+	border: 1px solid rgba(251, 191, 36, 0.5);
+	cursor: help;
+}
+
+/* 進場動畫：用 backwards（而非 both），結束後 hover 的 transform 才不會被動畫終值蓋掉 */
+.card-enter {
+	animation: card-enter 0.4s ease-out backwards;
+}
+@keyframes card-enter {
+	from {
+		opacity: 0;
+		transform: translateY(30px);
+	}
+}

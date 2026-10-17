@@ -52,6 +52,13 @@ const RunwayMap = ({ runways, windDir }) => {
 		return isOpposite ? -stripOffset : stripOffset;
 	};
 
+	const rad = (deg) => (deg * Math.PI) / 180;
+	// 把「旋轉前」的點 (dx, dy)（相對中心）轉成實際畫面座標，讓文字能保持直立
+	const rotated = (dx, dy, deg) => ({
+		x: center + dx * Math.cos(rad(deg)) - dy * Math.sin(rad(deg)),
+		y: center + dx * Math.sin(rad(deg)) + dy * Math.cos(rad(deg)),
+	});
+
 	return (
 		<div className="runway-map-wrapper">
 			<h4 className="map-title">機場跑道俯視幾何圖 (North Up)</h4>
@@ -61,6 +68,10 @@ const RunwayMap = ({ runways, windDir }) => {
 				height={size}
 				viewBox={`0 0 ${size} ${size}`}
 				className="runway-svg"
+				role="img"
+				aria-label={`跑道俯視圖：${runways.map((r) => r.name).join("、")}${
+					windDir != null ? `，風向 ${windDir}°` : ""
+				}`}
 			>
 				<circle
 					cx={center}
@@ -83,7 +94,13 @@ const RunwayMap = ({ runways, windDir }) => {
 								y1={center - runwayLength / 2}
 								x2={center + offsetX}
 								y2={center + runwayLength / 2}
-								className={`map-runway-line ${rwy.isFirst ? "best-runway" : "normal-runway"}`}
+								className={`map-runway-line ${
+									rwy.isClosed
+										? "closed-runway"
+										: rwy.isFirst
+											? "best-runway"
+											: "normal-runway"
+								}`}
 							/>
 							{rwy.isFirst && (
 								<circle
@@ -94,6 +111,22 @@ const RunwayMap = ({ runways, windDir }) => {
 								/>
 							)}
 						</g>
+					);
+				})}
+				{runways.map((rwy) => {
+					// 標在「該方向的入口端」（線的下端，航向朝上）
+					const pt = rotated(getOffset(rwy.name), runwayLength / 2 + 14, rwy.heading);
+					return (
+						<text
+							key={`label-${rwy.name}`}
+							x={pt.x}
+							y={pt.y}
+							textAnchor="middle"
+							dominantBaseline="middle"
+							className={`runway-label ${rwy.isClosed ? "closed" : ""}`}
+						>
+							{rwy.name}
+						</text>
 					);
 				})}
 				{windDir != null && (
@@ -120,6 +153,11 @@ const RunwayMap = ({ runways, windDir }) => {
 				<span className="legend-item">
 					<span className="dot red-dot"></span> 風向來源
 				</span>
+				{runways.some((r) => r.isClosed) && (
+					<span className="legend-item">
+						<span className="dot closed-dot"></span> NOTAM 關閉
+					</span>
+				)}
 			</div>
 		</div>
 	);

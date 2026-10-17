@@ -9,12 +9,13 @@ from typing import Any, Dict, Optional
 
 import httpx
 from dotenv import load_dotenv
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
-from notam_parser import process_notams
+from notam_parser import process_notams, summarize_closures
+from ratelimit import RateLimiter
 
 load_dotenv()
 log = logging.getLogger("aerobrief")
@@ -26,11 +27,21 @@ ICAO_RE = re.compile(r"^[A-Z0-9]{4}$")
 DEFAULT_ORIGINS = ["http://localhost:5173", "https://aerobrief.vercel.app"]
 CORS_ORIGINS = [o.strip() for o in os.getenv(
     "CORS_ORIGINS", ",".join(DEFAULT_ORIGINS)).split(",") if o.strip()]
+# Vercel preview 部署網域（aerobrief-git-xxx-user.vercel.app）。設為空字串可停用。
+CORS_ORIGIN_REGEX = os.getenv(
+    "CORS_ORIGIN_REGEX", r"^https://aerobrief(-[a-z0-9]+)*\.vercel\.app$") or None
+
+RATE_LIMIT_PER_MIN = int(os.getenv("RATE_LIMIT_PER_MIN", "120"))
+TRUST_PROXY = os.getenv("TRUST_PROXY", "").lower() in ("1", "true", "yes")
+rate_limiter = RateLimiter(RATE_LIMIT_PER_MIN)
 
 # ---------------------------------------------------------------- TTL 快取
 # METAR 約 30~60 分鐘才更新；前端輪詢不該每次都打 AVWX / FAA。
 TTL_SECONDS = {"metar": 120, "taf": 600, "station": 86400, "notam": 600}
+AVWX_CLIENT_ERROR_TTL = 120  # AVWX 回 4xx（多半是不存在的 ICAO）時短暫記住，避免被重複打
+CACHE_MAX_ENTRIES = int(os.getenv("CACHE_MAX_ENTRIES", "2000"))
 _cache: Dict[str, tuple] = {}
+_inflight: Dict[str, "asyncio.Future"] = {}  # 同一 key 同時間只打一次上游
 
 
 _FAILED = object()  # 負快取標記
@@ -44,8 +55,21 @@ def cache_get(key: str):
     return None
 
 
+def _evict(now: float):
+    for k in [k for k, (exp, _) in _cache.items() if exp <= now]:
+        del _cache[k]
+    if len(_cache) > CACHE_MAX_ENTRIES:  # 仍超量：丟最舊寫入的，留 10% 餘裕避免頻繁掃描
+        keep = int(CACHE_MAX_ENTRIES * 0.9)
+        for k in list(_cache)[: len(_cache) - keep]:
+            del _cache[k]
+
+
 def cache_set(key: str, value: Any, ttl: int):
-    _cache[key] = (time.monotonic() + ttl, value)
+    now = time.monotonic()
+    _cache.pop(key, None)  # 重新寫入 → 變成「最新」
+    _cache[key] = (now + ttl, value)
+    if len(_cache) > CACHE_MAX_ENTRIES:
+        _evict(now)
 
 
 # ---------------------------------------------------------------- VATSIM 背景抓取
@@ -80,9 +104,34 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title="AeroBrief API", description="AeroBrief Backend",
               version="1.1.0", lifespan=lifespan)
 
+_RATE_EXEMPT = {"/", "/api/status"}
+
+
+def _client_key(request: Request) -> str:
+    if TRUST_PROXY:
+        fwd = request.headers.get("x-forwarded-for", "")
+        if fwd:
+            return fwd.split(",")[0].strip()
+    return request.client.host if request.client else "unknown"
+
+
+@app.middleware("http")
+async def rate_limit_middleware(request: Request, call_next):
+    if request.method == "OPTIONS" or request.url.path in _RATE_EXEMPT:
+        return await call_next(request)
+    allowed, retry = rate_limiter.check(_client_key(request))
+    if not allowed:
+        resp = error_response("請求過於頻繁，請稍後再試", 429)
+        resp.headers["Retry-After"] = str(retry)
+        return resp
+    return await call_next(request)
+
+
+# 註：CORS 必須最後加入（= 最外層），429 等回應才會帶 CORS 標頭，瀏覽器才讀得到錯誤訊息。
 app.add_middleware(
     CORSMiddleware,
     allow_origins=CORS_ORIGINS,
+    allow_origin_regex=CORS_ORIGIN_REGEX,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -95,18 +144,11 @@ def error_response(message: str, status: int = 400):
 
 
 # ---------------------------------------------------------------- 工具
-async def fetch_json(key: str, ttl: int, call, fail_ttl: int = 0):
-    """回傳 (data, error)。任何失敗都轉成 error 字串，不會往外拋。
-    fail_ttl>0 時會短暫記住失敗（例如 FAA 持續 403），避免每次請求都去撞被擋的來源。"""
-    cached = cache_get(key)
-    if cached is not None:
-        if isinstance(cached, tuple) and cached and cached[0] is _FAILED:
-            return None, cached[1]
-        return cached, None
-
-    def fail(msg):
-        if fail_ttl:
-            cache_set(key, (_FAILED, msg), fail_ttl)
+async def _fetch_uncached(key, ttl, call, fail_ttl, client_error_ttl):
+    def fail(msg, status=None):
+        neg = fail_ttl or (client_error_ttl if status and 400 <= status < 500 else 0)
+        if neg:
+            cache_set(key, (_FAILED, msg), neg)
         return None, msg
 
     try:
@@ -114,13 +156,34 @@ async def fetch_json(key: str, ttl: int, call, fail_ttl: int = 0):
     except Exception as e:  # noqa: BLE001
         return fail(type(e).__name__)
     if res.status_code != 200:
-        return fail(f"HTTP {res.status_code}")
+        return fail(f"HTTP {res.status_code}", res.status_code)
     try:
         data = res.json()
     except ValueError:
         return fail("invalid JSON")
     cache_set(key, data, ttl)
     return data, None
+
+
+async def fetch_json(key: str, ttl: int, call, fail_ttl: int = 0, client_error_ttl: int = 0):
+    """回傳 (data, error)。任何失敗都轉成 error 字串，不會往外拋。
+    fail_ttl>0：任何失敗都短暫記住（例如 FAA 持續 403）。
+    client_error_ttl>0：只記住 4xx（逾時 / 5xx 等暫時性錯誤不記，下次可重試）。
+    同一 key 的並行請求共用同一次上游呼叫（避免 thundering herd）。"""
+    cached = cache_get(key)
+    if cached is not None:
+        if isinstance(cached, tuple) and cached and cached[0] is _FAILED:
+            return None, cached[1]
+        return cached, None
+
+    task = _inflight.get(key)
+    if task is None:
+        task = asyncio.ensure_future(
+            _fetch_uncached(key, ttl, call, fail_ttl, client_error_ttl))
+        _inflight[key] = task
+        task.add_done_callback(
+            lambda t, k=key: _inflight.get(k) is t and _inflight.pop(k, None))
+    return await asyncio.shield(task)
 
 
 def runway_heading(ident: Optional[str], bearing) -> Optional[int]:
@@ -229,11 +292,14 @@ async def get_weather(icao: str):
         (taf, taf_err), (metar, metar_err), (station, st_err), (notam, notam_err) = \
             await asyncio.gather(
                 fetch_json(f"taf:{icao}", TTL_SECONDS["taf"], lambda: client.get(
-                    f"https://avwx.rest/api/taf/{icao}", headers=avwx_headers)),
+                    f"https://avwx.rest/api/taf/{icao}", headers=avwx_headers),
+                    client_error_ttl=AVWX_CLIENT_ERROR_TTL),
                 fetch_json(f"metar:{icao}", TTL_SECONDS["metar"], lambda: client.get(
-                    f"https://avwx.rest/api/metar/{icao}", headers=avwx_headers)),
+                    f"https://avwx.rest/api/metar/{icao}", headers=avwx_headers),
+                    client_error_ttl=AVWX_CLIENT_ERROR_TTL),
                 fetch_json(f"station:{icao}", TTL_SECONDS["station"], lambda: client.get(
-                    f"https://avwx.rest/api/station/{icao}", headers=avwx_headers)),
+                    f"https://avwx.rest/api/station/{icao}", headers=avwx_headers),
+                    client_error_ttl=AVWX_CLIENT_ERROR_TTL),
                 fetch_json(f"notam:{icao}", TTL_SECONDS["notam"],
                            lambda: fetch_faa_notams(client, icao), fail_ttl=300),
             )
@@ -265,13 +331,17 @@ async def get_weather(icao: str):
             heading = runway_heading(ident, rwy.get(f"bearing{n}"))
             if heading is None:
                 continue
-            runways.append({"name": ident, "heading": heading, "isFirst": False})
+            # approx=True：沒有 bearing，用跑道號碼×10（磁方位）估算，與 METAR 的真北風向有磁偏角誤差
+            runways.append({"name": ident, "heading": heading, "isFirst": False,
+                            "approx": rwy.get(f"bearing{n}") is None})
 
+    notams = process_notams(notam)
     return {
         "taf": taf,
         "common": {**station, **metar},
         "runways": runways,
-        "notam": process_notams(notam),
+        "notam": notams,
+        "closures": summarize_closures(notams),
         "warnings": warnings,
     }
 
@@ -375,7 +445,9 @@ async def api_gateway(req: GatewayRequest):
                 "taf": weather_res["taf"],
                 "runways": weather_res["runways"],
                 "notams": weather_res["notam"],
+                "closures": weather_res["closures"],
                 "warnings": weather_res["warnings"],
+                "fetched_at": int(time.time()),
                 "vatsim": vatsim_res,
             }}
 

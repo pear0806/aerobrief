@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 
 import { calculateCrosswind } from "../utils/calcRWYwind.js";
+import { isRunwayClosed } from "../utils/runwayNames.js";
 import { toKnots } from "../utils/units.js";
 
 const EMPTY = {
@@ -10,7 +11,10 @@ const EMPTY = {
 	windGust: null,
 	isVariable: false,
 	noSafeRunway: false,
+	noSafeReason: null, // "aerodrome" | "closed" | "wind" | null
 };
+
+const CLOSED_MSG = "🚫 NOTAM 公告關閉";
 
 const angleDiff = (a, b) => {
 	const d = Math.abs(a - b) % 360;
@@ -34,19 +38,30 @@ export const useRunwayAnalysis = (data, limits) => {
 		// 風向不定 (VRB) 且有風：無法算分量，採最壞情況（風速本身視為側風）
 		const isVariable = windDir === null && peak > 0;
 
+		const closures = data.closures;
 		const processed = data.runways.map((rwy, index) => {
+			const isClosed = isRunwayClosed(rwy.name, closures);
+			const base = {
+				name: rwy.name,
+				heading: rwy.heading,
+				approx: !!rwy.approx,
+				isClosed,
+				index,
+			};
 			if (windDir === null) {
 				const danger = isVariable && peak > CrossWindLimit;
 				return {
-					name: rwy.name,
-					heading: rwy.heading,
+					...base,
 					crosswind: null,
 					headwind: null,
 					crosswindGust: null,
 					headwindGust: null,
 					isDanger: danger,
-					dangerMessage: danger ? "⚠️ 風向不定，風速超過側風限制" : "",
-					index,
+					dangerMessage: isClosed
+						? CLOSED_MSG
+						: danger
+							? "⚠️ 風向不定，風速超過側風限制"
+							: "",
 				};
 			}
 
@@ -76,36 +91,53 @@ export const useRunwayAnalysis = (data, limits) => {
 					(isTailWindDanger && -steady.headwind <= TailWindLimit));
 
 			return {
-				name: rwy.name,
-				heading: rwy.heading,
+				...base,
 				crosswind: steady.crosswind,
 				headwind: steady.headwind,
 				crosswindGust: windGust !== null ? gusty.crosswind : null,
 				headwindGust: windGust !== null ? gusty.headwind : null,
 				isDanger,
-				dangerMessage: isDanger
-					? `⚠️ ${parts.join("、")}超限${gustTriggered ? "（陣風）" : ""}`
-					: "",
-				index,
+				dangerMessage: isClosed
+					? CLOSED_MSG
+					: isDanger
+						? `⚠️ ${parts.join("、")}超限${gustTriggered ? "（陣風）" : ""}`
+						: "",
 			};
 		});
 
+		// 開放的跑道在前、被 NOTAM 關閉的沉到最後；各自再依頂風排序
 		const sorted = [...processed].sort(
-			(a, b) => (b.headwind ?? -999) - (a.headwind ?? -999),
+			(a, b) =>
+				Number(a.isClosed) - Number(b.isClosed) ||
+				(b.headwind ?? -999) - (a.headwind ?? -999),
 		);
 
-		// 只從「未超限」的跑道挑推薦；全部超限時不推薦任何一條
-		const safe = sorted.filter((r) => !r.isDanger && r.headwind !== null);
+		// 只從「未超限、未關閉」的跑道挑推薦；全部不可用時不推薦任何一條
+		const safe = sorted.filter(
+			(r) => !r.isDanger && !r.isClosed && r.headwind !== null,
+		);
 		const best = safe[0];
 		const finalRunways = sorted.map((rwy) => ({
 			...rwy,
 			isFirst:
 				!!best &&
+				!rwy.isClosed &&
 				!rwy.isDanger &&
 				rwy.headwind !== null &&
 				rwy.headwind >= best.headwind - 2 &&
 				angleDiff(rwy.heading, best.heading) < 90,
 		}));
+
+		const aerodromeClosed = !!closures?.aerodrome_closed;
+		const allClosed = finalRunways.length > 0 && finalRunways.every((r) => r.isClosed);
+		const windBlocked = !best && !(windDir === null && !isVariable);
+		const noSafeReason = aerodromeClosed
+			? "aerodrome"
+			: allClosed
+				? "closed"
+				: windBlocked
+					? "wind"
+					: null;
 
 		return {
 			processedRunways: finalRunways,
@@ -113,7 +145,8 @@ export const useRunwayAnalysis = (data, limits) => {
 			windSpeed,
 			windGust,
 			isVariable,
-			noSafeRunway: !best && !(windDir === null && !isVariable),
+			noSafeRunway: noSafeReason !== null,
+			noSafeReason,
 		};
 	}, [data, CrossWindLimit, HeadWindLimit, TailWindLimit]);
 };

@@ -28,7 +28,10 @@ const deferred = () => {
 	return { promise, resolve };
 };
 
-beforeEach(() => localStorage.clear());
+beforeEach(() => {
+	localStorage.clear();
+	window.history.replaceState(null, "", "/"); // App 會把 ?icao= 寫進網址，避免測試間互相汙染
+});
 afterEach(() => vi.restoreAllMocks());
 
 const search = (icao) => {
