@@ -11,6 +11,10 @@ import {
 import { useEffect, useRef } from "react";
 import { MapContainer, Marker, Popup, TileLayer, useMap } from "react-leaflet";
 
+import { getTileConfig } from "../config/mapTiles";
+
+const tiles = getTileConfig();
+
 const MapUpdater = ({ center, icao }) => {
 	const map = useMap();
 	const prevIcaoRef = useRef(null);
@@ -101,8 +105,10 @@ const RadarMap = ({
 					style={{ height: "100%", width: "100%" }}
 				>
 					<TileLayer
-						url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-						attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+						url={tiles.url}
+						attribution={tiles.attribution}
+						subdomains={tiles.subdomains}
+						maxZoom={tiles.maxZoom}
 					/>
 					<MapUpdater center={center} icao={icao} />
 					<Marker position={center} icon={airportIcon}>

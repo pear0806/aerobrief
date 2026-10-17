@@ -24,6 +24,7 @@ AeroBrief 是一個專為虛擬飛行愛好者（Flight SIM / VATSIM / IVAO 使�
     - 跑道俯視圖標註跑道號碼；沒有精確方位的跑道會標示「估算」
 
 - **VATSIM 即時雷達**
+    - 航管比對支援非 ICAO 開頭的呼號（澳洲 `BN_TWR`、美國 `JFK_TWR`、`BN-F_APP` 等），對照表來自 VATSpy data
     - 顯示「以該機場為起飛／目的地」的線上航班（依飛行計畫篩選，非距離篩選）與巡航中航班
     - 每 15 秒更新（輕量端點，天氣每 5 分鐘、且後端有快取）
 
@@ -170,6 +171,14 @@ TAF 或 NOTAM 失敗時簡報仍會回傳，並於 `warnings` 欄位說明。
 超過限流時回 `429`（含 `Retry-After` 與 CORS 標頭）。
 
 上游保護：同一 key 的並行請求共用一次上游呼叫；AVWX 回 4xx（多為不存在的 ICAO）會短暫記住 120 秒，逾時 / 5xx 不記，可立即重試。
+
+---
+
+### 更新 VATSIM 呼號前綴對照表
+
+`backend/data/vatspy_prefixes.json` 是 VATSpy data 的快照。遇到「某機場有航管在線卻沒顯示」，或每隔數月執行一次：
+
+    python scripts/update_vatspy_prefixes.py
 
 ---
 
