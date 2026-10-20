@@ -2,7 +2,9 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { aircraftDatabase } from "../data/aircrafts.js";
 
-export const DEFAULT_LIMITS = { cross: 15, tail: 10, head: 20 };
+// 頂風是有利的：預設 20 kts 會讓 14G24 這種普通天氣就出現「所有跑道超限」。
+// 與機型資料庫一致，用 50 kts 當作極端天氣的停飛標準（已儲存過設定的使用者不受影響）。
+export const DEFAULT_LIMITS = { cross: 15, tail: 10, head: 50 };
 const KEYS = {
 	cross: "crosswind-limit",
 	tail: "tailwind-limit",

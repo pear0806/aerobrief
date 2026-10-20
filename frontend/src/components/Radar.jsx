@@ -12,15 +12,29 @@ import { useEffect, useRef } from "react";
 import { MapContainer, Marker, Popup, TileLayer, useMap } from "react-leaflet";
 
 import { getTileConfig } from "../config/mapTiles";
+import { computeTrafficBounds } from "../utils/trafficBounds";
 
 const tiles = getTileConfig();
 
-const MapUpdater = ({ center, icao }) => {
+// 換機場時重設視野：有附近航班就 fitBounds 讓它們都看得到，否則回到預設 zoom。
+// 只在「換機場」時取景，不在每 15 秒的資料更新時取景，避免跟使用者的拖曳縮放打架。
+const MapUpdater = ({ center, icao, fitPoints }) => {
 	const map = useMap();
 	const prevIcaoRef = useRef(null);
+	const pointsRef = useRef(fitPoints);
+	// 先在 effect 裡同步最新的取景點（渲染期間不能寫 ref），下面的取景 effect 才讀得到
+	useEffect(() => {
+		pointsRef.current = fitPoints;
+	});
 	useEffect(() => {
 		if (center && icao !== prevIcaoRef.current) {
-			map.setView(center, 10);
+			const size = map.getSize();
+			const pts = pointsRef.current;
+			if (pts && size.x > 0 && size.y > 0) {
+				map.fitBounds(pts, { padding: [32, 32], maxZoom: 11 });
+			} else {
+				map.setView(center, 10);
+			}
 			prevIcaoRef.current = icao;
 		}
 	}, [center, icao, map]);
@@ -86,11 +100,13 @@ const RadarMap = ({
 		(p) => p.latitude != null && p.longitude != null,
 	);
 
+	const fitPoints = computeTrafficBounds(center, allTraffic);
+
 	return (
 		<div className="panel-card radar-map-wrapper">
-			<h3 className="section-title">
+			<h2 className="section-title">
 				<RadarIcon size={20} color="#38bdf8" /> 終端空域雷達 (Live Radar)
-			</h3>
+			</h2>
 
 			<div
 				className="radar-map-container"
@@ -110,8 +126,8 @@ const RadarMap = ({
 						subdomains={tiles.subdomains}
 						maxZoom={tiles.maxZoom}
 					/>
-					<MapUpdater center={center} icao={icao} />
-					<Marker position={center} icon={airportIcon}>
+					<MapUpdater center={center} icao={icao} fitPoints={fitPoints} />
+					<Marker position={center} icon={airportIcon} title={`${icao} 機場`}>
 						<Popup className="custom-popup">
 							<strong style={{ color: "#ef4444" }}>{icao}</strong>
 							<br />
@@ -123,6 +139,10 @@ const RadarMap = ({
 						<Marker
 							key={pilot.cid ?? pilot.callsign}
 							position={[pilot.latitude, pilot.longitude]}
+							// 無障礙：標記是可聚焦的按鈕，必須有名稱（Leaflet 會把 title 套到圖示元素上）
+							title={`${pilot.callsign} ${pilot.aircraft_short || ""} ${
+								pilot.isCruising ? "巡航" : pilot.isArrival ? "抵達" : "離場"
+							}`.replace(/\s+/g, " ")}
 							icon={createAirplaneIcon(
 								pilot.heading,
 								pilot.isArrival,

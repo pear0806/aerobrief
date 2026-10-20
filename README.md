@@ -116,6 +116,8 @@ AeroBrief 是一個專為虛擬飛行愛好者（Flight SIM / VATSIM / IVAO 使�
 | `RATE_LIMIT_PER_MIN` | `120` | 每個 IP 每分鐘請求上限；`0` 停用。`/api/status` 不計 |
 | `TRUST_PROXY` | 關閉 | 設為 `1` 時以 `X-Forwarded-For` 第一段作為 client IP（部署在 Render 等反向代理後必開，否則所有人共用同一個額度） |
 | `CACHE_MAX_ENTRIES` | `2000` | 記憶體快取上限，超過時先清過期、再丟最舊的 |
+| `LOG_LEVEL` | `INFO` | 應用程式日誌等級（含時間戳） |
+| `SLOW_REQUEST_MS` | `2000` | 超過這個毫秒數的請求會記一筆警告日誌；每個回應也帶 `X-Response-Time` 標頭 |
 
 6. 啟動後端：
     ```bash
@@ -172,6 +174,12 @@ TAF 或 NOTAM 失敗時簡報仍會回傳，並於 `warnings` 欄位說明。
 
 上游保護：同一 key 的並行請求共用一次上游呼叫；AVWX 回 4xx（多為不存在的 ICAO）會短暫記住 120 秒，逾時 / 5xx 不記，可立即重試。
 
+**上游故障時的降級（stale-if-error）：** METAR / TAF / NOTAM / 測站資料過期後仍保留一段寬限期（METAR 30 分、TAF 與 NOTAM 1 小時、測站 7 天）。上游逾時、5xx 或 429 時回傳舊資料，並在 `warnings` 標註「N 分鐘前的快取資料」；之後 30 秒內不再重打上游，避免故障時每個請求都等逾時。4xx（例如 ICAO 不存在）是明確答案，不會用舊資料掩蓋。
+
+效能：回應使用 `JSONResponse`（跳過 FastAPI 的 `jsonable_encoder`）、NOTAM 分類結果依文字快取、共用 HTTP 連線池（keep-alive）、並以 GZip 壓縮 ≥1 KB 的回應。
+
+`GET /api/status` 回傳版本、運行時間、快取筆數、VATSIM 資料年齡，以及各上游（`avwx` / `faa` / `vatsim`）最近一次成功與失敗的時間，方便判斷是上游掛了還是自己的問題。
+
 ---
 
 ### 更新 VATSIM 呼號前綴對照表
@@ -187,10 +195,24 @@ TAF 或 NOTAM 失敗時簡報仍會回傳，並於 `warnings` 欄位說明。
     # 後端
     cd backend && pip install -r requirements-dev.txt && python -m pytest
 
-    # 前端
-    cd frontend && npm install && npm run lint && npm test && npm run build
+    # 後端（含覆蓋率；CI 門檻 90%）
+    cd backend && python -m pytest --cov=. --cov-fail-under=90
 
-CI 設定位於 `.github/workflows/ci.yml`。
+    # 前端：lint + 單元 / 元件 / jsdom 無障礙測試（含覆蓋率門檻）+ build
+    cd frontend && npm install && npm run lint && npm run test:coverage && npm run build
+
+    # 端對端（真實瀏覽器，桌面 + 手機）：CSP、sticky 表頭、axe 色彩對比、觸控目標、雷達取景…
+    cd frontend && npx playwright install chromium && npm run e2e
+
+e2e 會自己 build 並以 `vite preview` 啟動（套用與正式環境相同的安全標頭），所有 API 與地圖請求都在測試內被攔截，不需要網路或金鑰。
+
+CI 設定位於 `.github/workflows/ci.yml`；`.github/dependabot.yml` 每週檢查依賴更新。
+
+### 安全標頭與部署（Vercel）
+
+`frontend/security-headers.js` 是 CSP 等標頭的單一來源，`frontend/vercel.json` 必須與它一致（`securityHeaders.test.js` 會檢查）。CSP 禁止行內 / eval 腳本與嵌入框架，並允許 `https:` 的圖磚與 API。**如果你改用自己的圖磚或 API 網域，通常不需要改 CSP**（已允許任何 https）；若要收緊，請同時改 `security-headers.js` 與 `vercel.json`。
+
+網站不再載入 Google Fonts（`@import` 會擋住整份 CSS 的渲染）；字型走系統字型，已安裝 Inter 的使用者仍會優先使用 Inter。
 
 ---
 
@@ -203,3 +225,5 @@ CI 設定位於 `.github/workflows/ci.yml`。
 - 機型風速限制為通用參考值（尚未逐一核對 FCOM），請以 FCOM / 公司 SOP 為準；UI 也會顯示此提醒。
 - NOTAM 關閉判斷偏保守：`CLSD EXC …` / `CLSD TO …` 這類「部分限制」也視為關閉；`RWY … PAPI/LGT/ILS NOT AVBL` 這類設施不可用則**不**視為跑道關閉。解析仰賴英文縮寫，非標準寫法可能漏判，請務必閱讀 NOTAM 原文。
 - 限流為單程序記憶體內實作；多 worker 部署時每個 worker 各自計數。
+- 自訂限制的預設頂風值從 20 改為 50 kts（與機型資料庫的「極端天氣停飛標準」一致；頂風對起降有利，20 會在 14G24 這種普通天氣就誤報「所有跑道超限」）。**已經儲存過設定的使用者不受影響**，仍沿用自己存的值。
+- 過期資料備援（stale-if-error）顯示的是舊資料，頁首的 METAR 發布時間與資料年齡會如實反映；請以 METAR 時間判斷是否採用。

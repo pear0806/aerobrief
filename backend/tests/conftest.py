@@ -14,6 +14,8 @@ def _clear_cache():
     main._cache.clear()
     main._inflight.clear()
     main.rate_limiter._hits.clear()
+    main._http_client = None
+    main.upstream_health.clear()
     yield
     main._cache.clear()
     main._inflight.clear()

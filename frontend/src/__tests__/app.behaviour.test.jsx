@@ -71,12 +71,12 @@ describe("closures reach the UI", () => {
 		expect(screen.getByTestId("rwymap").textContent).toMatch(/05L:X,?/);
 		expect(screen.getByTestId("rwymap").textContent).not.toMatch(/05L:X\*/);
 		expect(document.querySelector(".runway-card-container.recommended")).toBeNull();
-		expect(screen.getByText(/所有跑道都被 NOTAM 公告關閉/)).toBeTruthy();
+		expect(screen.getByRole("alert").textContent).toMatch(/所有跑道都被 NOTAM 公告關閉/);
 	});
 
 	it("aerodrome closure raises a clear alert", async () => {
 		await load(briefing("RCTP", { closures: { aerodrome_closed: true, closed_runways: [], notam_ids: ["A9"] } }));
-		expect(screen.getByText(/NOTAM 公告機場關閉/)).toBeTruthy();
+		expect(screen.getByRole("alert").textContent).toMatch(/NOTAM 公告機場關閉/);
 	});
 });
 
@@ -165,7 +165,7 @@ describe("aircraft selector and limits stay consistent", () => {
 	it("REGRESSION: first load shows CUSTOM with the limits actually applied", async () => {
 		await load();
 		expect(document.querySelector(".aircraft-select").value).toBe("CUSTOM");
-		expect([...document.querySelectorAll(".limit-setting-input")].map((i) => i.value)).toEqual(["15", "10", "20"]);
+		expect([...document.querySelectorAll(".limit-setting-input")].map((i) => i.value)).toEqual(["15", "10", "50"]);
 	});
 
 	it("choosing an aircraft loads its limits; editing a limit flips back to CUSTOM; reload restores", async () => {

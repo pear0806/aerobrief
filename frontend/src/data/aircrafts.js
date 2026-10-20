@@ -15,7 +15,7 @@ export const AIRCRAFT_LIMITS_NOTICE =
 
 export const aircraftDatabase = {
 	// 預設與自訂選項
-	CUSTOM: { name: "⚙️ 自訂限制 (手動輸入)", cross: 15, tail: 10, head: 20 },
+	CUSTOM: { name: "⚙️ 自訂限制 (手動輸入)", cross: 15, tail: 10, head: 50 },
 
 	// Boeing 737 家族
 	B738: {

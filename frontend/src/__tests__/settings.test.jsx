@@ -10,7 +10,7 @@ describe("loadSettings", () => {
 	it("fresh user: CUSTOM with conservative defaults (selector and limits agree)", () => {
 		const s = loadSettings(store());
 		expect(s.aircraft).toBe("CUSTOM");
-		expect(s.limits).toEqual({ cross: 15, tail: 10, head: 20 });
+		expect(s.limits).toEqual({ cross: 15, tail: 10, head: 50 });
 		expect(s.pressureUnit).toBe("hPa");
 	});
 
@@ -41,7 +41,7 @@ describe("loadSettings", () => {
 	it("garbage values are ignored; unknown aircraft → CUSTOM", () => {
 		const s = loadSettings(store({ aircraft: "NOPE", "crosswind-limit": "abc", "tailwind-limit": "-5", "pressure-unit": "zzz" }));
 		expect(s.aircraft).toBe("CUSTOM");
-		expect(s.limits).toEqual({ cross: 15, tail: 10, head: 20 });
+		expect(s.limits).toEqual({ cross: 15, tail: 10, head: 50 });
 		expect(s.pressureUnit).toBe("hPa");
 	});
 

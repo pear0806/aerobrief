@@ -21,12 +21,12 @@ const VatsimStatus = ({ controller, loading }) => {
 
 	return (
 		<div className="panel-card vatsim-section">
-			<h3 className="section-title">
+			<h2 className="section-title">
 				<Headset size={20} color="#38bdf8" /> VATSIM 線上航管
 				{controller.length > 0 && (
 					<span className="live-badge">● LIVE</span>
 				)}
-			</h3>
+			</h2>
 
 			<div className="vatsim-list">
 				{controller.length > 0 ? (

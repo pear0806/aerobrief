@@ -9,6 +9,7 @@
    一律以關閉優先（安全優先）。
 """
 import re
+from functools import lru_cache
 from datetime import datetime, timezone
 
 _RWY = re.compile(r"\b(?:RWY|RUNWAY)\b")
@@ -129,17 +130,18 @@ def _closure_kind(text: str):
     return "rwy" if kind == "ad" else kind
 
 
-def categorize_notam(raw_text: str) -> str:
+@lru_cache(maxsize=4096)
+def classify_notam(raw_text: str):
+    """(category, closed_runways, aerodrome_closed)。只與文字有關、與時間無關 → 可安全快取，
+    同一則 NOTAM 在上游快取有效期間內每個請求都會重複出現。"""
     text = _body(raw_text or "")
-
-    kind, _, _ = analyze_closure(text)
+    kind, rwys, ad = analyze_closure(text)
     if kind == "ad":
-        return CAT_AD_CLOSED
+        return CAT_AD_CLOSED, tuple(rwys), ad
     if kind == "rwy":
-        return CAT_RWY_CLOSED
+        return CAT_RWY_CLOSED, tuple(rwys), ad
     if kind == "twy":
-        return CAT_TWY_CLOSED
-
+        return CAT_TWY_CLOSED, (), ad
     hits = {}
     for name, rx in (("nav", _NAV), ("air", _AIRSPACE), ("work", _WORK),
                      ("rwy", _RWY), ("twy", _TWY)):
@@ -147,13 +149,15 @@ def categorize_notam(raw_text: str) -> str:
         if m:
             hits[name] = m.start()
     if not hits:
-        return CAT_GENERAL
-
+        return CAT_GENERAL, (), ad
     subject = min(hits, key=hits.get)
-    return {
-        "nav": CAT_NAV, "air": CAT_AIRSPACE, "work": CAT_WORK,
-        "rwy": CAT_RWY, "twy": CAT_TWY,
-    }[subject]
+    cat = {"nav": CAT_NAV, "air": CAT_AIRSPACE, "work": CAT_WORK,
+           "rwy": CAT_RWY, "twy": CAT_TWY}[subject]
+    return cat, (), ad
+
+
+def categorize_notam(raw_text: str) -> str:
+    return classify_notam(raw_text or "")[0]
 
 
 # FAA 回傳格式： "08/14/2026 0835"、"10/31/2026 0900EST"、"PERM"。
@@ -211,11 +215,11 @@ def process_notams(notam, now=None):
             continue
 
         raw_end = str(item.get("endDate") or "").strip()
-        _, closed_rwys, ad_closed = analyze_closure(_body(raw_text))
+        category, closed_rwys, ad_closed = classify_notam(raw_text)
         parsed.append({
             "id": item.get("notamNumber"),
-            "category": categorize_notam(raw_text),
-            "closed_runways": closed_rwys,
+            "category": category,
+            "closed_runways": list(closed_rwys),
             "aerodrome_closed": ad_closed,
             "raw": raw_text,
             "state": state,

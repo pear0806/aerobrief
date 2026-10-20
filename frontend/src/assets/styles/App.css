@@ -1,5 +1,5 @@
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap");
-
+/* 不再用 @import 載入 Google Fonts：它會擋住整份 CSS 的渲染（慢網路下首次繪製實測 144ms → 1624ms）。
+   使用者若已安裝 Inter 仍會優先使用，否則走系統字型。 */
 :root {
 	--bg-dark: #0f172a;
 	--card-bg: #1e293b;
@@ -44,14 +44,21 @@ body {
 		"Inter",
 		system-ui,
 		-apple-system,
+		"Segoe UI",
+		"Noto Sans TC",
+		"PingFang TC",
+		"Microsoft JhengHei",
 		sans-serif;
 	margin: 0;
 	-webkit-font-smoothing: antialiased;
 }
 
+/* overflow-x: hidden 會讓 body 變成（不捲動的）捲動容器，導致 position: sticky 失效；
+   clip 不會建立捲動容器。舊瀏覽器不認得 clip 時退回 hidden。 */
 html,
 body {
 	overflow-x: hidden;
+	overflow-x: clip;
 	width: 100%;
 }
 
@@ -72,38 +79,57 @@ body {
 }
 
 .error-message {
-	color: #ef4444;
+	color: #f87171;
 	text-align: center;
 }
 
 .section-title {
+	font-size: 1.17em;
 	border-bottom: 1px solid #334155;
 	padding-bottom: 5px;
 	margin-top: 30px;
+	margin-bottom: 1em;
 	color: #94a3b8;
 	display: flex;
 	align-items: center;
 	gap: 8px;
 }
 
+/* 緊湊表頭：桌面單行（~64px）、手機約 100px。舊版手機高 230px（佔螢幕 27%），所以先前即使黏住也不實用 */
 .sticky-header {
 	position: sticky;
 	top: 0;
 	z-index: 1000;
-	background: rgba(15, 23, 42, 0.85);
+	background: rgba(15, 23, 42, 0.92);
 	backdrop-filter: blur(12px);
 	-webkit-backdrop-filter: blur(12px);
-	margin: -20px -20px 20px -20px;
-	padding: 20px 20px 15px 20px;
+	margin: -20px -20px 16px -20px;
+	padding: 10px 20px;
 	border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 	display: flex;
-	flex-direction: column;
+	flex-wrap: wrap;
 	align-items: center;
+	justify-content: center;
+	gap: 6px 24px;
 }
 
 .sticky-header .app-main-title {
-	margin-top: 0;
-	margin-bottom: 15px;
+	margin: 0;
+	font-size: 1.35rem;
+	line-height: 1.2;
+	white-space: nowrap;
+}
+
+.sticky-header .search-container {
+	margin: 0;
+	width: auto;
+	max-width: none;
+	align-items: stretch;
+}
+
+.sticky-header .favorite-list {
+	flex-basis: 100%;
+	margin: 0;
 }
 
 .dashboard-layout {
@@ -256,4 +282,40 @@ select:focus-visible,
 input:focus-visible {
 	outline: 2px solid var(--primary-blue);
 	outline-offset: 2px;
+}
+
+/* ---- 手機：緊湊表頭 ---- */
+@media (max-width: 768px) {
+	.app-container {
+		padding: 12px;
+	}
+
+	.sticky-header {
+		margin: -12px -12px 12px -12px;
+		padding: 8px 12px;
+		gap: 4px 0;
+	}
+
+	.sticky-header .app-main-title {
+		font-size: 1.1rem;
+	}
+
+	.sticky-header .search-container {
+		width: 100%;
+	}
+}
+
+/* ---- 錨點捲動：預留表頭高度；尊重減少動態偏好 ---- */
+#runway-analysis {
+	scroll-margin-top: 96px;
+}
+@media (prefers-reduced-motion: no-preference) {
+	html {
+		scroll-behavior: smooth;
+	}
+}
+
+/* 標題層級修正（h1→h2→h3）後，維持原本 h4 的視覺大小；:where 讓元件自己的 CSS 仍可覆寫 */
+:where(.column-title, .map-title, .warning-title, .empty-airspace h3) {
+	font-size: 1em;
 }

@@ -1,6 +1,6 @@
 import "../assets/styles/TafTimeline.css";
 
-import { formatTafTime } from "../utils/time.js";
+import { formatTafRange } from "../utils/time.js";
 import { windUnitLabel } from "../utils/units.js";
 
 const cloudText = (c) =>
@@ -14,7 +14,7 @@ const TafTimeline = ({ tafData }) => {
 
 	return (
 		<div className="taf-section">
-			<h3 className="section-title">⏱️ 機場天氣預報 (TAF)</h3>
+			<h2 className="section-title">⏱️ 機場天氣預報 (TAF)</h2>
 
 			<div className="timeline-container">
 				{tafData.forecast.map((period, index) => {
@@ -24,8 +24,7 @@ const TafTimeline = ({ tafData }) => {
 						<div key={index} className="timeline-item">
 							<div className="timeline-time">
 								<div className="time-text">
-									{formatTafTime(period.start_time?.repr)} →{" "}
-									{formatTafTime(period.end_time?.repr)}
+									{formatTafRange(period.start_time?.repr, period.end_time?.repr)}
 								</div>
 								<div className="time-type">
 									{period.type || "FM"}

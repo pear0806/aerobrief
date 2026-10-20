@@ -2,8 +2,12 @@ import react from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
 import { VitePWA } from "vite-plugin-pwa";
 
+import { SECURITY_HEADERS } from "./security-headers.js";
+
 // https://vitejs.dev/config/
 export default defineConfig({
+	// preview 帶上與正式環境相同的安全標頭（含 CSP），e2e 才能驗證 CSP 不會擋掉功能
+	preview: { headers: SECURITY_HEADERS },
 	plugins: [
 		react(),
 		VitePWA({

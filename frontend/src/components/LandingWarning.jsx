@@ -27,11 +27,11 @@ const MinimaWarning = ({ data }) => {
 			</div>
 
 			<div className="warning-content">
-				<h4 className="warning-title">
+				<h3 className="warning-title">
 					{flightRules === "LIFR"
 						? "低儀器飛行條件 (LIFR) - 嚴重天氣警告"
 						: "儀器飛行條件 (IFR) - 注意起降標準"}
-				</h4>
+				</h3>
 
 				<p className="warning-text">
 					{flightRules === "LIFR"

@@ -30,7 +30,9 @@
 }
 
 .limit-setting-input {
-	width: 50px;
+	width: 56px;
+	min-height: 44px;
+	box-sizing: border-box;
 	padding: 6px;
 	border-radius: 6px;
 	border: 1px solid #475569;

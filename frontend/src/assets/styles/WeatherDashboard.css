@@ -29,18 +29,18 @@
 }
 
 .rule-MVFR {
-	background: #3b82f6;
-	color: #172554;
+	background: #1d4ed8;
+	color: #ffffff;
 }
 
 .rule-IFR {
-	background: #ef4444;
-	color: #450a0a;
+	background: #b91c1c;
+	color: #ffffff;
 }
 
 .rule-LIFR {
-	background: #d946ef;
-	color: #4a044e;
+	background: #a21caf;
+	color: #ffffff;
 }
 
 .metrics-grid {
@@ -59,7 +59,7 @@
 .metric-item label {
 	display: block;
 	font-size: 0.8em;
-	color: #94a3b8;
+	color: #cbd5e1; /* #94a3b8 對 #334155 只有 4.04:1 */
 	margin-bottom: 5px;
 }
 
@@ -69,14 +69,15 @@
 	color: #f1f5f9;
 }
 
+/* 視覺上仍是小字連結，但用負 margin 把可點擊區放大到 ≥44px 高，不影響排版 */
 .togglePressureUnit {
 	background: none;
 	border: none;
-	padding: 0;
+	padding: 15px 10px;
+	margin: -15px -10px -15px -2px;
 	font-family: inherit;
 	cursor: pointer;
-	margin-left: 8px;
-	font-size: 0.8em;
+	font-size: 12px;
 	color: #38bdf8;
 }
 
@@ -91,8 +92,13 @@
 	border-radius: 4px;
 	font-family: monospace;
 	color: #38bdf8;
-	font-size: 0.85em;
+	font-size: 13px; /* 原 0.85em ≈ 11px，內層 code / small 還會再縮小 */
 	word-break: break-all;
+}
+
+.raw-info code,
+.raw-info small {
+	font-size: 12px;
 }
 
 @media (max-width: 768px) {
@@ -110,8 +116,12 @@
 		gap: 10px;
 	}
 
+	/* 手機維持 2 欄（舊版 1 欄，6 個指標佔 ~600px）；項目數為奇數時最後一個跨滿整列 */
 	.metrics-grid {
-		display: flex;
-		flex-direction: column;
+		gap: 10px;
+	}
+
+	.metrics-grid .metric-item:last-child:nth-child(odd) {
+		grid-column: 1 / -1;
 	}
 }

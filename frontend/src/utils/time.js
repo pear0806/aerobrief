@@ -23,3 +23,16 @@ export const formatTafTime = (repr) => {
 export const METAR_WARN_MIN = 70; // METAR 通常每 30~60 分鐘一次
 export const METAR_STALE_MIN = 90;
 export const FETCH_STALE_MIN = 10; // 背景更新連續失敗的提示門檻
+
+/** TAF 區間：同一天 → "17日 12–18Z"；跨日 → "17日 18Z → 18日 00Z"（手機上最多兩行，不再斷成三行） */
+export const formatTafRange = (startRepr, endRepr) => {
+	const p = (r) => String(r ?? "").match(/^(\d{2})(\d{2})$/);
+	const a = p(startRepr);
+	const b = p(endRepr);
+	if (a && b) {
+		return a[1] === b[1]
+			? `${a[1]}日 ${a[2]}–${b[2]}Z`
+			: `${a[1]}日 ${a[2]}Z → ${b[1]}日 ${b[2]}Z`;
+	}
+	return `${formatTafTime(startRepr)} → ${formatTafTime(endRepr)}`;
+};

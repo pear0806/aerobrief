@@ -11,6 +11,7 @@ import httpx
 from dotenv import load_dotenv
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
@@ -19,7 +20,13 @@ from ratelimit import RateLimiter
 from vatspy import callsign_prefixes
 
 load_dotenv()
+if not logging.getLogger().handlers:  # uvicorn 只設定自己的 logger；讓應用程式日誌也有時間戳與等級
+    logging.basicConfig(
+        level=os.getenv("LOG_LEVEL", "INFO").upper(),
+        format="%(asctime)s %(levelname)s %(name)s: %(message)s")
 log = logging.getLogger("aerobrief")
+START_TIME = time.time()
+SLOW_REQUEST_MS = int(os.getenv("SLOW_REQUEST_MS", "2000"))
 
 AVWX_TOKEN = os.getenv("AVWX_TOKEN", "").strip().replace(
     '"', '').replace("'", "")
@@ -39,25 +46,48 @@ rate_limiter = RateLimiter(RATE_LIMIT_PER_MIN)
 # ---------------------------------------------------------------- TTL 快取
 # METAR 約 30~60 分鐘才更新；前端輪詢不該每次都打 AVWX / FAA。
 TTL_SECONDS = {"metar": 120, "taf": 600, "station": 86400, "notam": 600}
+# 過期後仍保留的「寬限期」：上游暫時故障時可回傳舊資料（stale-if-error），而不是整頁錯誤
+STALE_GRACE_SECONDS = {"metar": 1800, "taf": 3600, "station": 7 * 86400, "notam": 3600}
+STALE_RETRY_SECONDS = 30  # 回傳舊資料後，這段時間內不再重打上游（避免故障時每個請求都等逾時）
 AVWX_CLIENT_ERROR_TTL = 120  # AVWX 回 4xx（多半是不存在的 ICAO）時短暫記住，避免被重複打
 CACHE_MAX_ENTRIES = int(os.getenv("CACHE_MAX_ENTRIES", "2000"))
-_cache: Dict[str, tuple] = {}
+
+_UPSTREAM_OF = {"metar": "avwx", "taf": "avwx", "station": "avwx", "notam": "faa"}
+upstream_health: Dict[str, Dict[str, Any]] = {}
+
+
+class _Entry:
+    __slots__ = ("exp", "value", "stale_until", "fetched", "stale")
+
+    def __init__(self, exp, value, stale_until, fetched, stale=False):
+        self.exp, self.value, self.stale_until = exp, value, stale_until
+        self.fetched, self.stale = fetched, stale  # fetched: 真實取得時間 (time.time())
+
+
+_cache: Dict[str, _Entry] = {}
 _inflight: Dict[str, "asyncio.Future"] = {}  # 同一 key 同時間只打一次上游
-
-
 _FAILED = object()  # 負快取標記
 
 
-def cache_get(key: str):
+def _fresh_entry(key: str):
     hit = _cache.get(key)
-    if hit and hit[0] > time.monotonic():
-        return hit[1]
-    _cache.pop(key, None)
+    if hit is None:
+        return None
+    now = time.monotonic()
+    if hit.exp > now:
+        return hit
+    if hit.stale_until <= now:  # 連寬限期都過了才真正丟棄
+        _cache.pop(key, None)
     return None
 
 
+def cache_get(key: str):
+    hit = _fresh_entry(key)
+    return None if hit is None else hit.value
+
+
 def _evict(now: float):
-    for k in [k for k, (exp, _) in _cache.items() if exp <= now]:
+    for k in [k for k, e in _cache.items() if e.stale_until <= now]:
         del _cache[k]
     if len(_cache) > CACHE_MAX_ENTRIES:  # 仍超量：丟最舊寫入的，留 10% 餘裕避免頻繁掃描
         keep = int(CACHE_MAX_ENTRIES * 0.9)
@@ -65,12 +95,44 @@ def _evict(now: float):
             del _cache[k]
 
 
-def cache_set(key: str, value: Any, ttl: int):
+def cache_set(key: str, value: Any, ttl: int, stale_ttl: int = 0):
     now = time.monotonic()
     _cache.pop(key, None)  # 重新寫入 → 變成「最新」
-    _cache[key] = (now + ttl, value)
+    _cache[key] = _Entry(now + ttl, value, now + ttl + stale_ttl, time.time())
     if len(_cache) > CACHE_MAX_ENTRIES:
         _evict(now)
+
+
+def _mark_upstream(name: str, ok: bool, message: str = ""):
+    h = upstream_health.setdefault(
+        name, {"last_ok": None, "last_error": None, "last_error_message": None})
+    if ok:
+        h["last_ok"] = int(time.time())
+    else:
+        h["last_error"], h["last_error_message"] = int(time.time()), message
+
+
+# ---------------------------------------------------------------- 共用 HTTP client
+# 每次請求都新建 AsyncClient 會重做 DNS + TLS 握手；共用連線池 + keep-alive 可省下數十到數百毫秒。
+_http_client = None
+_http_client_cls = None
+
+
+def get_http_client():
+    global _http_client, _http_client_cls
+    cls = httpx.AsyncClient  # 測試會替換這個類別；類別變了就重建
+    if _http_client is None or _http_client_cls is not cls or getattr(_http_client, "is_closed", False):
+        _http_client = cls(timeout=10, limits=httpx.Limits(
+            max_keepalive_connections=20, keepalive_expiry=30))
+        _http_client_cls = cls
+    return _http_client
+
+
+async def close_http_client():
+    global _http_client, _http_client_cls
+    client, _http_client, _http_client_cls = _http_client, None, None
+    if client is not None and hasattr(client, "aclose"):
+        await client.aclose()
 
 
 # ---------------------------------------------------------------- VATSIM 背景抓取
@@ -86,10 +148,13 @@ async def fetch_vatsim_data_loop():
                 if res.status_code == 200:
                     vatsim_cache["data"] = res.json()
                     vatsim_cache["updated_at"] = time.time()
+                    _mark_upstream("vatsim", True)
                 else:
                     log.warning("VATSIM HTTP %s", res.status_code)
+                    _mark_upstream("vatsim", False, f"HTTP {res.status_code}")
             except Exception as e:  # noqa: BLE001
                 log.warning("背景抓取 VATSIM 失敗: %s", e)
+                _mark_upstream("vatsim", False, type(e).__name__)
             await asyncio.sleep(15)
 
 
@@ -100,10 +165,16 @@ async def lifespan(app: FastAPI):
     task.cancel()
     with suppress(asyncio.CancelledError):
         await task
+    await close_http_client()
 
 
 app = FastAPI(title="AeroBrief API", description="AeroBrief Backend",
               version="1.1.0", lifespan=lifespan)
+
+# 壓縮：NOTAM 多的機場單次回應可達 50~100+ KB；JSON 文字壓縮後通常剩 15~30%。
+# 必須在 @app.middleware("http")（BaseHTTPMiddleware）之前加入＝放在更內層：
+# 否則回應會被包成串流，GZip 無法得知大小，minimum_size 就失效（連幾百 bytes 都被壓）。
+app.add_middleware(GZipMiddleware, minimum_size=1024, compresslevel=5)
 
 _RATE_EXEMPT = {"/", "/api/status"}
 
@@ -118,6 +189,7 @@ def _client_key(request: Request) -> str:
 
 @app.middleware("http")
 async def rate_limit_middleware(request: Request, call_next):
+    t0 = time.perf_counter()
     if request.method == "OPTIONS" or request.url.path in _RATE_EXEMPT:
         return await call_next(request)
     allowed, retry = rate_limiter.check(_client_key(request))
@@ -125,7 +197,13 @@ async def rate_limit_middleware(request: Request, call_next):
         resp = error_response("請求過於頻繁，請稍後再試", 429)
         resp.headers["Retry-After"] = str(retry)
         return resp
-    return await call_next(request)
+    response = await call_next(request)
+    elapsed_ms = (time.perf_counter() - t0) * 1000
+    response.headers["X-Response-Time"] = f"{elapsed_ms:.0f}ms"
+    if elapsed_ms >= SLOW_REQUEST_MS:
+        log.warning("慢請求 %s %s → %s，%.0f ms", request.method, request.url.path,
+                    response.status_code, elapsed_ms)
+    return response
 
 
 # 註：CORS 必須最後加入（= 最外層），429 等回應才會帶 CORS 標頭，瀏覽器才讀得到錯誤訊息。
@@ -145,12 +223,25 @@ def error_response(message: str, status: int = 400):
 
 
 # ---------------------------------------------------------------- 工具
-async def _fetch_uncached(key, ttl, call, fail_ttl, client_error_ttl):
+async def _fetch_uncached(key, ttl, call, fail_ttl, client_error_ttl, stale_ttl):
+    """回傳 (data, error, stale_age_s)。stale_age_s 不為 None 代表這是過期的備援資料。"""
+    upstream = _UPSTREAM_OF.get(key.split(":", 1)[0], key.split(":", 1)[0])
+
     def fail(msg, status=None):
+        _mark_upstream(upstream, False, msg)
+        # 暫時性故障（連線錯誤 / 5xx / 429 / 壞 JSON）且手上有寬限期內的舊資料 → 回舊資料
+        transient = status is None or status >= 500 or status == 429
+        old = _cache.get(key)
+        now = time.monotonic()
+        if (transient and old is not None and old.stale_until > now
+                and not (isinstance(old.value, tuple) and old.value and old.value[0] is _FAILED)):
+            _cache[key] = _Entry(now + STALE_RETRY_SECONDS, old.value, old.stale_until,
+                                 old.fetched, True)
+            return old.value, None, int(time.time() - old.fetched)
         neg = fail_ttl or (client_error_ttl if status and 400 <= status < 500 else 0)
         if neg:
             cache_set(key, (_FAILED, msg), neg)
-        return None, msg
+        return None, msg, None
 
     try:
         res = await call()
@@ -162,29 +253,40 @@ async def _fetch_uncached(key, ttl, call, fail_ttl, client_error_ttl):
         data = res.json()
     except ValueError:
         return fail("invalid JSON")
-    cache_set(key, data, ttl)
-    return data, None
+    cache_set(key, data, ttl, stale_ttl)
+    _mark_upstream(upstream, True)
+    return data, None, None
 
 
-async def fetch_json(key: str, ttl: int, call, fail_ttl: int = 0, client_error_ttl: int = 0):
-    """回傳 (data, error)。任何失敗都轉成 error 字串，不會往外拋。
+async def fetch_json_ex(key: str, ttl: int, call, fail_ttl: int = 0,
+                        client_error_ttl: int = 0, stale_ttl: int = 0):
+    """回傳 (data, error, stale_age_s)；任何失敗都轉成 error 字串，不會往外拋。
     fail_ttl>0：任何失敗都短暫記住（例如 FAA 持續 403）。
     client_error_ttl>0：只記住 4xx（逾時 / 5xx 等暫時性錯誤不記，下次可重試）。
+    stale_ttl>0：過期後仍保留這麼久；上游暫時故障時回傳舊資料（stale_age_s 為其年齡）。
     同一 key 的並行請求共用同一次上游呼叫（避免 thundering herd）。"""
-    cached = cache_get(key)
-    if cached is not None:
-        if isinstance(cached, tuple) and cached and cached[0] is _FAILED:
-            return None, cached[1]
-        return cached, None
+    hit = _fresh_entry(key)
+    if hit is not None:
+        v = hit.value
+        if isinstance(v, tuple) and v and v[0] is _FAILED:
+            return None, v[1], None
+        return v, None, (int(time.time() - hit.fetched) if hit.stale else None)
 
     task = _inflight.get(key)
     if task is None:
         task = asyncio.ensure_future(
-            _fetch_uncached(key, ttl, call, fail_ttl, client_error_ttl))
+            _fetch_uncached(key, ttl, call, fail_ttl, client_error_ttl, stale_ttl))
         _inflight[key] = task
         task.add_done_callback(
             lambda t, k=key: _inflight.get(k) is t and _inflight.pop(k, None))
     return await asyncio.shield(task)
+
+
+async def fetch_json(key: str, ttl: int, call, fail_ttl: int = 0, client_error_ttl: int = 0,
+                     stale_ttl: int = 0):
+    """相容介面：只回傳 (data, error)。"""
+    data, err, _ = await fetch_json_ex(key, ttl, call, fail_ttl, client_error_ttl, stale_ttl)
+    return data, err
 
 
 def runway_heading(ident: Optional[str], bearing) -> Optional[int]:
@@ -289,21 +391,22 @@ async def get_weather(icao: str):
 
     avwx_headers = {"Authorization": AVWX_TOKEN, "User-Agent": "AeroBrief/1.1"}
 
-    async with httpx.AsyncClient(timeout=10) as client:
-        (taf, taf_err), (metar, metar_err), (station, st_err), (notam, notam_err) = \
-            await asyncio.gather(
-                fetch_json(f"taf:{icao}", TTL_SECONDS["taf"], lambda: client.get(
-                    f"https://avwx.rest/api/taf/{icao}", headers=avwx_headers),
-                    client_error_ttl=AVWX_CLIENT_ERROR_TTL),
-                fetch_json(f"metar:{icao}", TTL_SECONDS["metar"], lambda: client.get(
-                    f"https://avwx.rest/api/metar/{icao}", headers=avwx_headers),
-                    client_error_ttl=AVWX_CLIENT_ERROR_TTL),
-                fetch_json(f"station:{icao}", TTL_SECONDS["station"], lambda: client.get(
-                    f"https://avwx.rest/api/station/{icao}", headers=avwx_headers),
-                    client_error_ttl=AVWX_CLIENT_ERROR_TTL),
-                fetch_json(f"notam:{icao}", TTL_SECONDS["notam"],
-                           lambda: fetch_faa_notams(client, icao), fail_ttl=300),
-            )
+    client = get_http_client()
+    (taf, taf_err, taf_age), (metar, metar_err, metar_age), (station, st_err, st_age), \
+        (notam, notam_err, notam_age) = await asyncio.gather(
+            fetch_json_ex(f"taf:{icao}", TTL_SECONDS["taf"], lambda: client.get(
+                f"https://avwx.rest/api/taf/{icao}", headers=avwx_headers),
+                client_error_ttl=AVWX_CLIENT_ERROR_TTL, stale_ttl=STALE_GRACE_SECONDS["taf"]),
+            fetch_json_ex(f"metar:{icao}", TTL_SECONDS["metar"], lambda: client.get(
+                f"https://avwx.rest/api/metar/{icao}", headers=avwx_headers),
+                client_error_ttl=AVWX_CLIENT_ERROR_TTL, stale_ttl=STALE_GRACE_SECONDS["metar"]),
+            fetch_json_ex(f"station:{icao}", TTL_SECONDS["station"], lambda: client.get(
+                f"https://avwx.rest/api/station/{icao}", headers=avwx_headers),
+                client_error_ttl=AVWX_CLIENT_ERROR_TTL, stale_ttl=STALE_GRACE_SECONDS["station"]),
+            fetch_json_ex(f"notam:{icao}", TTL_SECONDS["notam"],
+                          lambda: fetch_faa_notams(client, icao), fail_ttl=300,
+                          stale_ttl=STALE_GRACE_SECONDS["notam"]),
+        )
 
     # METAR / 測站是必要資料；TAF / NOTAM 失敗則降級並回報 warnings
     if metar is None:
@@ -312,6 +415,10 @@ async def get_weather(icao: str):
         return {"error": f"無法取得 {icao} 的測站資料（{st_err}）", "status": 502}
 
     warnings = []
+    for label, age in (("METAR", metar_age), ("TAF", taf_age), ("NOTAM", notam_age),
+                       ("測站資料", st_age)):
+        if age is not None:  # 上游暫時故障，回傳的是寬限期內的舊資料
+            warnings.append(f"{label}為 {max(1, age // 60)} 分鐘前的快取資料（上游暫時無法連線）")
     if taf is None:
         warnings.append(f"TAF 暫時無法取得（{taf_err}）")
     if notam is None:
@@ -430,7 +537,8 @@ async def api_gateway(req: GatewayRequest):
                 return error_response("ICAO 代碼格式不正確（需為 4 碼英數字）", 400)
 
             if req.action == "GET_VATSIM":
-                return {"success": True, "data": await get_vatsim(icao), "error": None}
+                return JSONResponse(content={
+                    "success": True, "data": await get_vatsim(icao), "error": None})
 
             weather_res, vatsim_res = await asyncio.gather(
                 get_weather(icao), get_vatsim(icao), return_exceptions=True)
@@ -443,7 +551,8 @@ async def api_gateway(req: GatewayRequest):
             if isinstance(vatsim_res, Exception):
                 vatsim_res = {"error": "VATSIM 資料擷取失敗"}
 
-            return {"success": True, "error": None, "data": {
+            # 直接回 JSONResponse：跳過 FastAPI 的 jsonable_encoder（遞迴走訪整份資料，實測占 CPU 約 4 成）
+            return JSONResponse(content={"success": True, "error": None, "data": {
                 "icao": icao,
                 "weather": weather_res["common"],
                 "taf": weather_res["taf"],
@@ -453,7 +562,7 @@ async def api_gateway(req: GatewayRequest):
                 "warnings": weather_res["warnings"],
                 "fetched_at": int(time.time()),
                 "vatsim": vatsim_res,
-            }}
+            }})
 
         return error_response(f"未知的操作: {req.action}", 400)
     except Exception:  # noqa: BLE001
@@ -468,9 +577,17 @@ async def root():
 
 @app.get("/api/status")
 async def get_status():
+    updated = vatsim_cache.get("updated_at")
     return {"status": "online", "service": "AeroBrief Backend API",
+            "version": app.version,
+            "uptime_s": int(time.time() - START_TIME),
             "vatsim_ready": vatsim_cache["data"] is not None,
-            "has_avwx_token": bool(AVWX_TOKEN)}
+            "vatsim_data_age_s": int(time.time() - updated) if updated else None,
+            "has_avwx_token": bool(AVWX_TOKEN),
+            "cache_entries": len(_cache),
+            "cache_max_entries": CACHE_MAX_ENTRIES,
+            # 各上游最近一次成功 / 失敗的 Unix 秒；用來判斷是上游掛了還是自己的問題
+            "upstreams": upstream_health}
 
 
 @app.get("/api/weather/{icao}")
@@ -478,7 +595,7 @@ async def weather_endpoint(icao: str):
     out = await get_weather(icao)
     if "error" in out:
         return JSONResponse(status_code=out.get("status", 502), content={"error": out["error"]})
-    return out
+    return JSONResponse(content=out)
 
 
 @app.get("/api/vatsim/{icao}")
@@ -489,4 +606,4 @@ async def vatsim_endpoint(icao: str):
     out = await get_vatsim(icao)
     if "error" in out:
         return JSONResponse(status_code=503, content=out)
-    return out
+    return JSONResponse(content=out)

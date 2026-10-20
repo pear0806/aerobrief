@@ -61,7 +61,7 @@ const RunwayMap = ({ runways, windDir }) => {
 
 	return (
 		<div className="runway-map-wrapper">
-			<h4 className="map-title">機場跑道俯視幾何圖 (North Up)</h4>
+			<h3 className="map-title">機場跑道俯視幾何圖 (North Up)</h3>
 
 			<svg
 				width={size}

@@ -14,7 +14,7 @@ const VISIBLE_REFRESH_MIN_MS = 60_000;
  * - 分頁回到前景時立即補更新，不必等下一輪計時器。
  */
 export function useBriefing() {
-	const { callGateway, loading, error } = useGateway();
+	const { callGateway, loading, slow, error } = useGateway();
 	const [briefing, setBriefing] = useState(null);
 	const activeIcaoRef = useRef(null);
 
@@ -88,5 +88,5 @@ export function useBriefing() {
 		};
 	}, [target, callGateway]);
 
-	return { briefing, loading, error, search };
+	return { briefing, loading, slow, error, search };
 }

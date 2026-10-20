@@ -55,7 +55,7 @@ function App() {
 	const [notice, setNotice] = useState(null);
 
 	const settings = useSettings();
-	const { briefing, loading, error, search } = useBriefing();
+	const { briefing, loading, slow, error, search } = useBriefing();
 
 	useEffect(() => {
 		try {
@@ -120,7 +120,7 @@ function App() {
 
 	return (
 		<div className="app-container">
-			<div className="sticky-header">
+			<header className="sticky-header">
 				<h1 className="app-main-title">✈️ AeroBrief</h1>
 				<SearchBar
 					icao={icao}
@@ -130,8 +130,9 @@ function App() {
 					favorite={favorite}
 					toggleFavorite={toggleFavorite}
 				/>
-			</div>
+			</header>
 
+			<main>
 			{(inputError || error) && (
 				<div className="error-message" role="alert">
 					⚠️ {inputError || error}
@@ -148,7 +149,7 @@ function App() {
 			)}
 
 			{loading ? (
-				<Skeleton />
+				<Skeleton slow={slow} />
 			) : briefing ? (
 				<Dashboard
 					briefing={briefing}
@@ -162,6 +163,7 @@ function App() {
 			) : (
 				!error && !inputError && <EmptyState onPick={pick} />
 			)}
+			</main>
 		</div>
 	);
 }

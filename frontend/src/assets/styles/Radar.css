@@ -125,3 +125,12 @@
 		margin-top: -4px;
 	}
 }
+
+/* 觸控裝置：放大縮放按鈕（預設 30px，低於 WCAG 2.2 AA 的 24px 以外的舒適點擊範圍） */
+@media (pointer: coarse) {
+	.leaflet-touch .leaflet-bar a {
+		width: 40px;
+		height: 40px;
+		line-height: 40px;
+	}
+}

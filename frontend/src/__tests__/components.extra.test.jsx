@@ -18,6 +18,12 @@ const pilot = (over = {}) => ({
 });
 
 describe("time utils", () => {
+	it("formatTafRange: same day collapses, cross-day spells both days", async () => {
+		const { formatTafRange } = await import("../utils/time.js");
+		expect(formatTafRange("1712", "1718")).toBe("17日 12–18Z");
+		expect(formatTafRange("1718", "1800")).toBe("17日 18Z → 18日 00Z");
+		expect(formatTafRange("x", "y")).toBe("xZ → yZ");
+	});
 	it("formatTafTime reads ddhh, not hhmm", () => {
 		expect(formatTafTime("1606")).toBe("16日 06Z");
 		expect(formatTafTime("abc")).toBe("abcZ");
@@ -115,7 +121,7 @@ describe("TafTimeline", () => {
 		expect(screen.getByText("BKN012").className).toContain("ceiling-layer");
 		expect(screen.getByText("FEW010").className).not.toContain("ceiling-layer");
 		expect(container.querySelector(".time-type").textContent).toMatch(/TEMPO PROB30/);
-		expect(container.querySelector(".time-text").textContent).toMatch(/16日 06Z/);
+		expect(container.querySelector(".time-text").textContent).toMatch(/16日 06–12Z/);
 	});
 	it("falls back to type+altitude when repr is missing", () => {
 		const t = JSON.parse(JSON.stringify(taf));

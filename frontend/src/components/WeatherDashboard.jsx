@@ -38,7 +38,7 @@ const WeatherDashboard = ({ data, pressureUnit, setPressureUnit }) => {
 
 	return (
 		<div className="panel-card weather-dashboard">
-			<h3 className="section-title">
+			<h2 className="section-title">
 				<CloudSun size={20} color="#38bdf8" />
 				{data.common.station} {data.common.iata ? `(${data.common.iata})` : ""}{" "}
 				氣象
@@ -47,7 +47,7 @@ const WeatherDashboard = ({ data, pressureUnit, setPressureUnit }) => {
 				>
 					{data.common.flight_rules}
 				</span>
-			</h3>
+			</h2>
 
 			<div className="metrics-grid">
 				<div className="metric-item">

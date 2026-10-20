@@ -90,3 +90,9 @@
 		opacity: 1;
 	}
 }
+
+.slow-hint {
+	margin-top: 0;
+	color: #fbbf24;
+	font-size: 0.9rem;
+}

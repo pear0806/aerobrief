@@ -1,7 +1,9 @@
-import { lazy, memo, Suspense, useMemo } from "react";
+import { lazy, memo, Suspense, useCallback, useMemo } from "react";
 
 import { useRunwayAnalysis } from "../hooks/useRunwayAnalysis";
+import { buildSummary, REASON_TEXT } from "../utils/summary";
 import AircraftSelector from "./AircraftSelector";
+import BriefingSummary from "./BriefingSummary";
 import DataFreshness from "./DataFreshness";
 import ErrorBoundary from "./ErrorBoundary";
 import FadeIn from "./FadeIn";
@@ -18,10 +20,24 @@ import WeatherDashboard from "./WeatherDashboard";
 // Leaflet 約佔 bundle 的 4 成，而雷達在畫面下半部：延遲載入，首屏更快
 const Radar = lazy(() => import("./Radar"));
 
+// 每 15 秒的 VATSIM 輪詢只會換掉 briefing.vatsim；其餘面板的 props 引用不變，用 memo 跳過重新渲染
+// （實測 4 次輪詢，天氣 / TAF / NOTAM 面板各被多渲染 4 次、跑道卡片 8 次）。
+const MWeather = memo(WeatherDashboard);
+const MTaf = memo(TafTimeline);
+const MNotam = memo(NotamBoard);
+const MStatus = memo(VatsimStatus);
+const MTraffic = memo(VatsimTraffic);
+const MRunwayCard = memo(RunwayCard);
+const MLanding = memo(LandingWarning);
+const MAircraft = memo(AircraftSelector);
+const MLimit = memo(LimitControl);
+const MSummary = memo(BriefingSummary);
+
+const EMPTY = [];
 const NO_SAFE_MESSAGE = {
-	aerodrome: "🚨 NOTAM 公告機場關閉，請確認後再簽派。",
-	closed: "🚨 所有跑道都被 NOTAM 公告關閉，沒有推薦跑道。",
-	wind: "🚨 所有跑道都超出目前設定的風速限制，沒有推薦跑道。",
+	aerodrome: `🚨 ${REASON_TEXT.aerodrome}，請確認後再簽派。`,
+	closed: `🚨 ${REASON_TEXT.closed}，沒有推薦跑道。`,
+	wind: `🚨 ${REASON_TEXT.wind}，沒有推薦跑道。`,
 };
 
 /**
@@ -37,22 +53,19 @@ const Dashboard = memo(function Dashboard({
 	selectAircraft,
 	setLimit,
 }) {
+	const { weather, taf, notams, runways, closures } = briefing;
+
+	// 只依賴「真正會影響這些面板」的欄位；vatsim 變動不會產生新的 legacyData
 	const legacyData = useMemo(
-		() => ({
-			common: briefing.weather,
-			taf: briefing.taf,
-			notam: briefing.notams,
-			runways: briefing.runways,
-			closures: briefing.closures,
-		}),
-		[briefing],
+		() => ({ common: weather, taf, notam: notams, runways, closures }),
+		[weather, taf, notams, runways, closures],
 	);
 
 	const vatsim = briefing.vatsim || {};
-	const controller = vatsim.controllers || [];
-	const arrivals = vatsim.arrivals || [];
-	const departures = vatsim.departures || [];
-	const cruisings = vatsim.cruisings || [];
+	const controller = vatsim.controllers || EMPTY;
+	const arrivals = vatsim.arrivals || EMPTY;
+	const departures = vatsim.departures || EMPTY;
+	const cruisings = vatsim.cruisings || EMPTY;
 
 	const analysisLimits = useMemo(
 		() => ({
@@ -62,8 +75,17 @@ const Dashboard = memo(function Dashboard({
 		}),
 		[limits],
 	);
-	const { processedRunways, windDir, windSpeed, isVariable, noSafeReason } =
-		useRunwayAnalysis(legacyData, analysisLimits);
+	const analysis = useRunwayAnalysis(legacyData, analysisLimits);
+	const { processedRunways, windDir, isVariable, windSpeed, noSafeReason } = analysis;
+
+	const summary = useMemo(
+		() => buildSummary({ weather, analysis, closures, atcCount: controller.length }),
+		[weather, analysis, closures, controller.length],
+	);
+
+	const setCross = useCallback((v) => setLimit("cross", v), [setLimit]);
+	const setTail = useCallback((v) => setLimit("tail", v), [setLimit]);
+	const setHead = useCallback((v) => setLimit("head", v), [setLimit]);
 
 	const guard = (node, delay) => (
 		<FadeIn delay={delay}>
@@ -74,42 +96,40 @@ const Dashboard = memo(function Dashboard({
 	return (
 		<div className="dashboard-layout">
 			<div className="bottom-full-width">
-				<DataFreshness
-					metarTime={briefing.weather?.time?.dt}
-					fetchedAt={briefing.fetched_at}
-				/>
+				<MSummary icao={briefing.icao} summary={summary} />
+				<DataFreshness metarTime={weather?.time?.dt} fetchedAt={briefing.fetched_at} />
 			</div>
 
 			<div className="left-column">
 				{guard(
-					<WeatherDashboard
+					<MWeather
 						data={legacyData}
 						pressureUnit={pressureUnit}
 						setPressureUnit={setPressureUnit}
 					/>,
 					0.1,
 				)}
-				{guard(<TafTimeline tafData={briefing.taf} />, 0.2)}
-				{guard(<NotamBoard notams={briefing.notams} />, 0.3)}
+				{guard(<MTaf tafData={taf} />, 0.2)}
+				{guard(<MNotam notams={notams} />, 0.3)}
 			</div>
 
 			<div className="right-column">
-				{guard(<VatsimStatus controller={controller} loading={false} />, 0.15)}
+				{guard(<MStatus controller={controller} loading={false} />, 0.15)}
 				{guard(
 					<Suspense fallback={<div className="panel-card">載入雷達地圖…</div>}>
 						<Radar
 							arrivals={arrivals}
 							departures={departures}
 							cruisings={cruisings}
-							airportLat={briefing.weather?.latitude}
-							airportLon={briefing.weather?.longitude}
+							airportLat={weather?.latitude}
+							airportLon={weather?.longitude}
 							icao={briefing.icao}
 						/>
 					</Suspense>,
 					0.25,
 				)}
 				{guard(
-					<VatsimTraffic
+					<MTraffic
 						arrivals={arrivals}
 						departures={departures}
 						cruisings={cruisings}
@@ -121,29 +141,19 @@ const Dashboard = memo(function Dashboard({
 			<div className="bottom-full-width">
 				{guard(
 					<>
-						<AircraftSelector aircraft={aircraft} onSelect={selectAircraft} />
+						<MAircraft aircraft={aircraft} onSelect={selectAircraft} />
 
 						<div className="limit-setting-section">
-							<LimitControl
-								label="✈️ 機型側風限制"
-								value={limits.cross}
-								setValue={(v) => setLimit("cross", v)}
-							/>
-							<LimitControl
-								label="✈️ 機型順風限制"
-								value={limits.tail}
-								setValue={(v) => setLimit("tail", v)}
-							/>
-							<LimitControl
-								label="✈️ 機型頂風限制"
-								value={limits.head}
-								setValue={(v) => setLimit("head", v)}
-							/>
+							<MLimit label="✈️ 機型側風限制" value={limits.cross} setValue={setCross} />
+							<MLimit label="✈️ 機型順風限制" value={limits.tail} setValue={setTail} />
+							<MLimit label="✈️ 機型頂風限制" value={limits.head} setValue={setHead} />
 						</div>
 
-						<LandingWarning data={legacyData} />
+						<MLanding data={legacyData} />
 
-						<h3 className="section-title">跑道分析</h3>
+						<h2 className="section-title" id="runway-analysis">
+							跑道分析
+						</h2>
 						{isVariable && (
 							<div className="error-message">
 								⚠️ 風向不定 (VRB) {windSpeed} kts：無法計算各跑道風分量，已以風速本身保守評估。
@@ -163,7 +173,7 @@ const Dashboard = memo(function Dashboard({
 										windDir={windDir}
 									/>
 									{processedRunways.map((rwy) => (
-										<RunwayCard
+										<MRunwayCard
 											key={rwy.name}
 											runwayName={rwy.name}
 											heading={rwy.heading}
@@ -183,7 +193,7 @@ const Dashboard = memo(function Dashboard({
 									))}
 								</>
 							) : (
-								<p style={{ textAlign: "center", color: "#666" }}>無跑道資料</p>
+								<p style={{ textAlign: "center", color: "#94a3b8" }}>無跑道資料</p>
 							)}
 						</div>
 					</>,

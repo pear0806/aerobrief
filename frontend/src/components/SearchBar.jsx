@@ -13,8 +13,10 @@ const SearchBar = ({
 }) => {
 	const inputRef = useRef(null);
 
+	// 桌面自動聚焦方便直接輸入；觸控裝置不聚焦，否則一開頁面就跳出鍵盤、遮住一半畫面
 	useEffect(() => {
-		if (inputRef.current) inputRef.current.focus();
+		const coarse = window.matchMedia?.("(pointer: coarse)")?.matches;
+		if (!coarse && inputRef.current) inputRef.current.focus();
 	}, []);
 
 	const handleKeyDown = (e) => {

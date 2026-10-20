@@ -1,29 +1,39 @@
 .search-container {
 	display: flex;
 	justify-content: center;
-	gap: 10px;
+	gap: 8px;
 	margin-bottom: 15px;
 	width: 100%;
 	max-width: 580px;
 }
+
 .search-input {
 	width: 200px;
+	min-width: 0;
+	min-height: 44px;
+	box-sizing: border-box;
 	background: #1e293b;
-	border: 1px solid #334155;
+	border: 1px solid #475569;
 	color: white;
-	padding: 12px;
+	padding: 0 12px;
 	border-radius: 6px;
-	font-size: 16px;
+	font-size: 16px; /* 16px 以上 iOS 才不會在聚焦時自動放大頁面 */
 	text-align: center;
 	letter-spacing: 1px;
 }
 
+/* 觸控目標至少 44×44（WCAG 2.5.5 / Apple HIG） */
 .star-btn {
 	background: none;
 	border: none;
+	min-width: 44px;
+	min-height: 44px;
+	padding: 0;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
 	font-size: 1.5rem;
 	cursor: pointer;
-	padding: 0 10px;
 	color: #475569;
 	transition: all 0.3s ease;
 }
@@ -33,13 +43,15 @@
 }
 
 .search-btn {
-	width: 160px;
+	min-width: 120px;
+	min-height: 44px;
 	white-space: nowrap;
 	display: flex;
 	justify-content: center;
 	align-items: center;
 	text-align: center;
-	background: #0ea5e9;
+	/* 白字對 #0ea5e9 只有 2.77:1，改 #0369a1 = 5.93:1（WCAG AA 需 4.5:1） */
+	background: #0369a1;
 	border: none;
 	color: white;
 	padding: 0 20px;
@@ -50,7 +62,7 @@
 }
 
 .search-btn:hover {
-	background: #0284c7;
+	background: #075985;
 }
 
 .search-btn:disabled {
@@ -59,42 +71,59 @@
 }
 
 .favorite-list {
-	margin-top: 10px;
 	display: flex;
 	justify-content: center;
 	gap: 8px;
 	flex-wrap: wrap;
-	margin-bottom: 10px;
+	margin: 10px 0;
 }
 
 .favorite-list span {
 	font-size: 0.8rem;
-	color: #64678b;
+	color: #94a3b8;
 	align-self: center;
 }
 
 .favorite-list button {
 	background-color: #1e293b;
-	color: #94a3b8;
-	border: 1px solid #334155;
-	border-radius: 15px;
-	padding: 4px 12px;
-	font-size: 0.8rem;
+	color: #cbd5e1;
+	border: 1px solid #475569;
+	border-radius: 18px;
+	min-height: 32px;
+	padding: 0 14px;
+	font-size: 0.85rem;
 	cursor: pointer;
 }
 
 @media (max-width: 768px) {
+	/* 手機維持同一列：輸入框撐滿剩餘寬度，不再垂直堆疊（舊版表頭因此高達 230px） */
 	.search-container {
 		width: 100%;
-		display: flex;
-		flex-direction: column;
-		justify-content: center;
-		align-items: center !important;
+		gap: 6px;
 	}
 
+	.search-input {
+		flex: 1;
+		width: auto;
+	}
+
+	.search-btn {
+		min-width: 0;
+		padding: 0 14px;
+	}
+
+	/* 收藏太多時橫向捲動，避免表頭長高 */
 	.favorite-list {
-		flex-wrap: wrap;
-		justify-content: center;
-		gap: 8px;
+		flex-wrap: nowrap;
+		justify-content: flex-start;
+		overflow-x: auto;
+		-webkit-overflow-scrolling: touch;
+		scrollbar-width: none;
+		padding-bottom: 2px;
+	}
+
+	.favorite-list button,
+	.favorite-list span {
+		flex: 0 0 auto;
 	}
 }
